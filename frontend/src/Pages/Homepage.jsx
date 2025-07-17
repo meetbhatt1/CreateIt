@@ -4,13 +4,14 @@ import { LanguageSection } from "../components/language/LanguageSection";
 import { InterviewSection } from "../components/question/InterviewSection";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import API from "../utils/API";
 
 export const HomePage = () => {
   const [projects, setProjects] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/projects/all")
+    fetch(`${API}/projects/all`)
       .then((res) => res.json())
       .then((data) => setProjects(data.projects || []));
   }, []);

@@ -3,7 +3,7 @@ dotenv.config(); // ✅ must be here!
 
 import passport from 'passport';
 import GoogleStrategy from 'passport-google-oauth20';
-import User from '../models/UserModel.js';
+import User from '../models/userModel.js';
 
 passport.use(new GoogleStrategy({
     clientID: process.env.CLIENT_ID,

@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DevVerse Dashboard - Visual Mockup</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;600;700&family=Fredoka:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Comic Neue", cursive;
+        background: linear-gradient(135deg, #e8f2ff 0%, #f0e6ff 100%);
+        background-attachment: fixed;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .mockup-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 30px;
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+        overflow: hidden;
+        border: 5px solid #d6d8ff;
+        transform: rotate(-0.5deg);
+      }
+
+      .mockup-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+        text-align: center;
+        color: white;
+        position: relative;
+      }
+
+      .mockup-title {
+        font-family: "Fredoka", sans-serif;
+        font-size: 2.5rem;
+        font-weight: 700;
+        text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+        margin-bottom: 10px;
+      }
+
+      .mockup-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+      }
+
+      .dashboard-mockup {
+        padding: 30px;
+        display: grid;
+        grid-template-columns: 1fr 2fr 1fr;
+        gap: 25px;
+        min-height: 800px;
+      }
+
+      /* Section Styles */
+      .section {
+        background: linear-gradient(135deg, #f7fafc, #e2e8f0);
+        border-radius: 20px;
+        padding: 20px;
+        border: 3px solid #d6d8ff;
+        position: relative;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+      }
+
+      .section:nth-child(odd) {
+        transform: rotate(1deg);
+      }
+
+      .section:nth-child(even) {
+        transform: rotate(-1deg);
+      }
+
+      .section-title {
+        font-family: "Fredoka", sans-serif;
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .section-content {
+        color: #4a5568;
+        line-height: 1.6;
+      }
+
+      /* Left Column */
+      .left-column {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .welcome-section {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        text-align: center;
+        padding: 25px;
+      }
+
+      .profile-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: white;
+        color: #667eea;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin: 0 auto 15px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        border: 4px solid rgba(255, 255, 255, 0.5);
+      }
+
+      .user-name {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+
+      .user-level {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 8px 15px;
+        border-radius: 20px;
+        display: inline-block;
+        margin-bottom: 15px;
+      }
+
+      .xp-bar {
+        background: rgba(255, 255, 255, 0.2);
+        height: 12px;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 10px;
+      }
+
+      .xp-fill {
+        background: linear-gradient(90deg, #48bb78, #38a169);
+        height: 100%;
+        width: 65%;
+        border-radius: 10px;
+      }
+
+      .rating-stars {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+      }
+
+      .badges {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .quick-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .action-btn {
+        background: white;
+        border: 2px solid #d6d8ff;
+        border-radius: 15px;
+        padding: 15px;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 600;
+        color: #4a5568;
+      }
+
+      .action-btn:hover {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        transform: translateX(5px);
+      }
+
+      .action-icon {
+        font-size: 1.3rem;
+      }
+
+      /* Middle Column */
+      .middle-column {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .activity-item {
+        background: white;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 12px;
+        border-left: 4px solid #667eea;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .activity-text {
+        color: #2d3748;
+        font-weight: 500;
+        margin-bottom: 5px;
+      }
+
+      .activity-time {
+        color: #9f7aea;
+        font-size: 0.9rem;
+      }
+
+      .connection-card {
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s;
+      }
+
+      .connection-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+      }
+
+      .connection-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .connection-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #b794f6, #9f7aea);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+      }
+
+      .connection-name {
+        font-weight: 600;
+        color: #2d3748;
+      }
+
+      .connection-skills {
+        color: #667eea;
+        font-size: 0.9rem;
+      }
+
+      .connection-btn {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-top: 10px;
+      }
+
+      /* Right Column */
+      .right-column {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .stat-item {
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .stat-number {
+        font-family: "Fredoka", sans-serif;
+        font-size: 2rem;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 5px;
+      }
+
+      .stat-label {
+        color: #4a5568;
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+
+      .challenge-card {
+        background: linear-gradient(135deg, #48bb78, #38a169);
+        color: white;
+        text-align: center;
+        padding: 25px;
+      }
+
+      .challenge-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+      }
+
+      .challenge-title {
+        font-family: "Fredoka", sans-serif;
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+
+      .challenge-btn {
+        background: white;
+        color: #38a169;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: 600;
+        margin-top: 15px;
+      }
+
+      /* Visual indicators */
+      .section::before {
+        content: attr(data-number);
+        position: absolute;
+        top: -15px;
+        left: 20px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.9rem;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 1200px) {
+        .dashboard-mockup {
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+        }
+
+        .right-column {
+          grid-column: 1 / -1;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .dashboard-mockup {
+          grid-template-columns: 1fr;
+          gap: 15px;
+          padding: 20px;
+        }
+
+        .right-column {
+          grid-template-columns: 1fr;
+        }
+
+        .mockup-container {
+          transform: rotate(0deg);
+          margin: 0 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="mockup-container">
+      <div class="mockup-header">
+        <h1 class="mockup-title">🚀 DevVerse Dashboard</h1>
+        <p class="mockup-subtitle">
+          Visual Layout Mockup - All Suggested Sections
+        </p>
+      </div>
+
+      <div class="dashboard-mockup">
+        <!-- Left Column -->
+        <div class="left-column">
+          <!-- Welcome Header -->
+          <div class="section welcome-section" data-number="1">
+            <div class="profile-avatar">😎</div>
+            <div class="user-name">Hello, Alex! 👋</div>
+            <div class="user-level">Level 3 Developer 🔥</div>
+            <div class="xp-bar">
+              <div class="xp-fill"></div>
+            </div>
+            <div class="rating-stars">⭐⭐⭐⭐⭐</div>
+            <div class="badges">
+              <span class="badge">🤝 First Collaboration</span>
+              <span class="badge">🎓 Mock Mentor</span>
+              <span class="badge">🔥 10 Day Streak</span>
+            </div>
+          </div>
+
+          <!-- Quick Actions Panel -->
+          <div class="section" data-number="3">
+            <h3 class="section-title">🛠️ Quick Actions</h3>
+            <div class="quick-actions">
+              <button class="action-btn">
+                <span class="action-icon">➕</span>
+                Create New Project
+              </button>
+              <button class="action-btn">
+                <span class="action-icon">👥</span>
+                Find Collaborators
+              </button>
+              <button class="action-btn">
+                <span class="action-icon">📅</span>
+                Schedule Mock Interview
+              </button>
+              <button class="action-btn">
+                <span class="action-icon">💬</span>
+                Join Community Discussion
+              </button>
+              <button class="action-btn">
+                <span class="action-icon">🎯</span>
+                Set Weekly Goal
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Middle Column -->
+        <div class="middle-column">
+          <!-- Activity Feed -->
+          <div class="section" data-number="4">
+            <h3 class="section-title">📋 My Activity Feed</h3>
+            <div class="section-content">
+              <div class="activity-item">
+                <div class="activity-text">
+                  You helped Sarah with a React mock interview
+                </div>
+                <div class="activity-time">2 hours ago</div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-text">
+                  Project 'Chat App' was liked by 5 users
+                </div>
+                <div class="activity-time">4 hours ago</div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-text">
+                  You completed the JavaScript challenge
+                </div>
+                <div class="activity-time">1 day ago</div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-text">
+                  New collaboration request from Mike
+                </div>
+                <div class="activity-time">2 days ago</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Suggested Connections -->
+          <div class="section" data-number="5">
+            <h3 class="section-title">💡 Suggested Connections</h3>
+            <div class="section-content">
+              <div class="connection-card">
+                <div class="connection-header">
+                  <div class="connection-avatar">JD</div>
+                  <div>
+                    <div class="connection-name">John Doe</div>
+                    <div class="connection-skills">React, Node.js, Python</div>
+                  </div>
+                </div>
+                <p>Looking for frontend collaboration on e-commerce project</p>
+                <button class="connection-btn">Connect</button>
+              </div>
+
+              <div class="connection-card">
+                <div class="connection-header">
+                  <div class="connection-avatar">MK</div>
+                  <div>
+                    <div class="connection-name">Maria Kim</div>
+                    <div class="connection-skills">Vue.js, TypeScript, AWS</div>
+                  </div>
+                </div>
+                <p>Open source contributor seeking mentorship</p>
+                <button class="connection-btn">Connect</button>
+              </div>
+
+              <div class="connection-card">
+                <div class="connection-header">
+                  <div class="connection-avatar">RS</div>
+                  <div>
+                    <div class="connection-name">Robert Smith</div>
+                    <div class="connection-skills">
+                      Django, PostgreSQL, Docker
+                    </div>
+                  </div>
+                </div>
+                <p>Backend expert available for mock interviews</p>
+                <button class="connection-btn">Connect</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="right-column">
+          <!-- User Progress Summary -->
+          <div class="section" data-number="2">
+            <h3 class="section-title">📈 Progress Summary</h3>
+            <div class="section-content">
+              <div style="text-align: center; margin-bottom: 20px">
+                <div style="font-size: 2rem; margin-bottom: 10px">🎖️</div>
+                <div style="font-weight: 600; color: #667eea">
+                  XP: 2,450 / 3,000
+                </div>
+                <div style="color: #9f7aea; margin-top: 5px">
+                  550 XP to Level 4!
+                </div>
+              </div>
+              <div
+                style="
+                  background: white;
+                  padding: 15px;
+                  border-radius: 15px;
+                  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                "
+              >
+                <div style="font-weight: 600; margin-bottom: 10px">
+                  Recent Achievements:
+                </div>
+                <div
+                  style="font-size: 0.9rem; color: #4a5568; line-height: 1.6"
+                >
+                  🏆 Completed 5 mock interviews<br />
+                  🎯 Maintained 15-day streak<br />
+                  👥 Helped 3 developers this week<br />
+                  ⭐ Received 4.8/5 average rating
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats Panel -->
+          <div class="section" data-number="6">
+            <h3 class="section-title">📊 My Stats</h3>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-number">12</div>
+                <div class="stat-label">Projects</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-number">28</div>
+                <div class="stat-label">Interviews</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-number">47</div>
+                <div class="stat-label">Issues Solved</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-number">156</div>
+                <div class="stat-label">Profile Views</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Weekly Challenge -->
+          <div class="section challenge-card" data-number="7">
+            <div class="challenge-icon">🚀</div>
+            <div class="challenge-title">Weekly Spotlight</div>
+            <p style="margin-bottom: 10px">Featured Contributor</p>
+            <p style="font-size: 0.9rem; margin-bottom: 15px">
+              Join Sunday Night Mock Jam
+            </p>
+            <button class="challenge-btn">Join Challenge</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

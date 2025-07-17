@@ -1,0 +1,109 @@
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+
+export default function ProjectsDashboard() {
+  const [projects, setProjects] = useState([]);
+  const [error, setError] = useState("");
+
+  // Dummy project to show if none exist
+  const fakeProject = {
+    _id: "dummy-project-id",
+    title: "Sample AI Project",
+    description: "A demo AI/ML project for showcasing dashboard layout.",
+    domain: "AI/ML",
+    techStack: ["Python", "TensorFlow", "React"],
+    collaborationType: "Mentored",
+    owner: "Anonymous",
+    members: [
+      {
+        user: null,
+        role: "Contributor",
+        joinedAt: new Date(),
+      },
+    ],
+  };
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const res = await axios.get("http://localhost:8000/api/projects/all");
+        console.log(res?.data);
+        if (res.data.projects.length === 0) {
+          // Inject dummy project for display
+          setProjects([fakeProject]);
+        } else {
+          setProjects(res.data.projects);
+        }
+      } catch (err) {
+        setError("Failed to load projects");
+      }
+    };
+    fetchProjects();
+  }, []);
+
+  const handleDelete = async (projectId) => {
+    // Prevent deleting the fake project
+    if (projectId === "dummy-project-id") return;
+
+    try {
+      await axios.delete(`/api/projects/${projectId}`);
+      setProjects((prev) => prev.filter((p) => p._id !== projectId));
+    } catch (err) {
+      setError("Delete failed - you can only delete your own projects");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 py-10 px-4 sm:px-8">
+      <h1 className="text-3xl font-bold text-center mb-6">My Projects</h1>
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6 max-w-xl mx-auto">
+          {error}
+        </div>
+      )}
+
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+        {projects.map((project) => (
+          <div
+            key={project._id}
+            className="bg-white rounded-2xl shadow-md p-6 flex flex-col justify-between"
+          >
+            <div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                {project.title}
+              </h3>
+              <p className="text-gray-600 text-sm mb-2">
+                {project.description}
+              </p>
+              <p className="text-gray-500 text-sm">
+                <strong>Domain:</strong> {project.domain}
+              </p>
+              <p className="text-gray-500 text-sm">
+                <strong>Collab Type:</strong> {project.collaborationType}
+              </p>
+              <p className="text-gray-500 text-sm">
+                <strong>Tech Stack:</strong>{" "}
+                {project.techStack?.join(", ") || "N/A"}
+              </p>
+            </div>
+            <div className="mt-4 text-right">
+              {project._id !== "dummy-project-id" ? (
+                <button
+                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition"
+                  onClick={() => handleDelete(project._id)}
+                >
+                  Delete Project
+                </button>
+              ) : (
+                <span className="text-gray-400 italic text-sm">
+                  This is a demo project
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

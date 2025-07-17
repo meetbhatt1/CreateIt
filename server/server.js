@@ -21,6 +21,9 @@ app.use(morgan('dev'));
 
 // Routes
 app.use(passport.initialize());
+app.get("/api", (req, res) => {
+    res.json({ message: "API is working ✅" });
+});
 app.use('/api/auth', AuthRoute);
 app.use('/api/projects', ProjectRoutes);
 

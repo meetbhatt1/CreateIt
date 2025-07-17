@@ -1,38 +1,53 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { Upload, Code, Database, Image, Sparkles, Rocket, FileText, Globe, Users, Brain, Cloud, Link, ArrowLeft } from "lucide-react";
+import {
+  Upload,
+  Code,
+  Database,
+  Image,
+  Sparkles,
+  Rocket,
+  FileText,
+  Globe,
+  Users,
+  Brain,
+  Cloud,
+  Link,
+  ArrowLeft,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import API from "../../utils/API";
 
-const DOMAIN_OPTIONS = [
-  "Web Dev",
-  "Mobile",
-  "AI/ML",
-  "DevOps",
-  "Blockchain",
-];
-const COLLAB_OPTIONS = [
-  "Open Source",
-  "Team Only",
-  "Mentored",
-];
+const DOMAIN_OPTIONS = ["Web Dev", "Mobile", "AI/ML", "DevOps", "Blockchain"];
+const COLLAB_OPTIONS = ["Open Source", "Team Only", "Mentored"];
 
 const getDomainIcon = (domain) => {
   switch (domain) {
-    case "Web Dev": return <Globe className="w-5 h-5" />;
-    case "Mobile": return <Code className="w-5 h-5" />;
-    case "AI/ML": return <Brain className="w-5 h-5" />;
-    case "DevOps": return <Cloud className="w-5 h-5" />;
-    case "Blockchain": return <Link className="w-5 h-5" />;
-    default: return <Code className="w-5 h-5" />;
+    case "Web Dev":
+      return <Globe className="w-5 h-5" />;
+    case "Mobile":
+      return <Code className="w-5 h-5" />;
+    case "AI/ML":
+      return <Brain className="w-5 h-5" />;
+    case "DevOps":
+      return <Cloud className="w-5 h-5" />;
+    case "Blockchain":
+      return <Link className="w-5 h-5" />;
+    default:
+      return <Code className="w-5 h-5" />;
   }
 };
 
 const getCollabIcon = (collab) => {
   switch (collab) {
-    case "Open Source": return <Users className="w-5 h-5" />;
-    case "Team Only": return <Users className="w-5 h-5" />;
-    case "Mentored": return <Users className="w-5 h-5" />;
-    default: return <Users className="w-5 h-5" />;
+    case "Open Source":
+      return <Users className="w-5 h-5" />;
+    case "Team Only":
+      return <Users className="w-5 h-5" />;
+    case "Mentored":
+      return <Users className="w-5 h-5" />;
+    default:
+      return <Users className="w-5 h-5" />;
   }
 };
 
@@ -78,7 +93,9 @@ export default function AddProject() {
       data.append("domain", form.domain);
       data.append("collaborationType", form.collaborationType);
       // Tech stack as array
-      form.techStack.split(",").map((t) => data.append("techStack[]", t.trim()));
+      form.techStack
+        .split(",")
+        .map((t) => data.append("techStack[]", t.trim()));
       // Zip files
       Object.entries(zipFiles).forEach(([key, file]) => {
         if (file) data.append(key, file);
@@ -89,12 +106,23 @@ export default function AddProject() {
       let ownerId = localStorage.getItem("userId");
       if (!ownerId) ownerId = "665f0aee4f9abcde12345678";
       data.append("ownerId", ownerId);
-      const res = await axios.post("http://localhost:8000/api/projects/create", data, {
+      const res = await axios.post(`${API}/projects/create`, data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setMessage("Project created successfully!");
-      setForm({ title: "", description: "", domain: "", techStack: "", collaborationType: "" });
-      setZipFiles({ frontend: null, backend: null, envFile: null, dbFile: null });
+      setForm({
+        title: "",
+        description: "",
+        domain: "",
+        techStack: "",
+        collaborationType: "",
+      });
+      setZipFiles({
+        frontend: null,
+        backend: null,
+        envFile: null,
+        dbFile: null,
+      });
       setScreenshots([]);
     } catch (err) {
       setMessage(err.response?.data?.message || "Error creating project");
@@ -131,14 +159,16 @@ export default function AddProject() {
           {/* Background decoration */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-200 to-pink-200 rounded-full opacity-20 transform translate-x-16 -translate-y-16"></div>
           <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-br from-blue-200 to-purple-200 rounded-full opacity-20 transform -translate-x-12 translate-y-12"></div>
-          
+
           {/* Message Display */}
           {message && (
-            <div className={`mb-6 p-4 rounded-2xl text-center font-semibold transform -rotate-1 border-3 ${
-              message.includes("success") 
-                ? "bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border-green-200" 
-                : "bg-gradient-to-r from-red-100 to-rose-100 text-red-700 border-red-200"
-            }`}>
+            <div
+              className={`mb-6 p-4 rounded-2xl text-center font-semibold transform -rotate-1 border-3 ${
+                message.includes("success")
+                  ? "bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border-green-200"
+                  : "bg-gradient-to-r from-red-100 to-rose-100 text-red-700 border-red-200"
+              }`}
+            >
               {message}
             </div>
           )}
@@ -193,15 +223,21 @@ export default function AddProject() {
                   >
                     <option value="">🌟 Select Your Domain</option>
                     {DOMAIN_OPTIONS.map((d) => (
-                      <option key={d} value={d}>{d}</option>
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
                     ))}
                   </select>
                   <div className="absolute top-1/2 right-4 transform -translate-y-1/2 pointer-events-none">
-                    {form.domain ? getDomainIcon(form.domain) : <Code className="w-5 h-5 text-gray-400" />}
+                    {form.domain ? (
+                      getDomainIcon(form.domain)
+                    ) : (
+                      <Code className="w-5 h-5 text-gray-400" />
+                    )}
                   </div>
                 </div>
               </div>
-              
+
               <div className="transform -rotate-1">
                 <div className="relative">
                   <select
@@ -213,11 +249,17 @@ export default function AddProject() {
                   >
                     <option value="">🤝 How do you want to collaborate?</option>
                     {COLLAB_OPTIONS.map((c) => (
-                      <option key={c} value={c}>{c}</option>
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
                     ))}
                   </select>
                   <div className="absolute top-1/2 right-4 transform -translate-y-1/2 pointer-events-none">
-                    {form.collaborationType ? getCollabIcon(form.collaborationType) : <Users className="w-5 h-5 text-gray-400" />}
+                    {form.collaborationType ? (
+                      getCollabIcon(form.collaborationType)
+                    ) : (
+                      <Users className="w-5 h-5 text-gray-400" />
+                    )}
                   </div>
                 </div>
               </div>
@@ -246,7 +288,7 @@ export default function AddProject() {
               <h3 className="text-xl font-bold text-gray-800 mb-6 text-center flex items-center justify-center gap-2">
                 📁 Upload Your Project Files
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Frontend Zip */}
                 <div className="group">
@@ -257,17 +299,19 @@ export default function AddProject() {
                     Frontend Zip
                   </label>
                   <div className="relative">
-                    <input 
-                      type="file" 
-                      name="frontend" 
-                      accept=".zip" 
-                      onChange={handleZipChange} 
+                    <input
+                      type="file"
+                      name="frontend"
+                      accept=".zip"
+                      onChange={handleZipChange}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     />
                     <div className="border-3 border-dashed border-purple-300 rounded-2xl p-6 text-center hover:border-purple-500 transition-all duration-300 hover:bg-purple-50 group-hover:transform group-hover:scale-105">
                       <Upload className="w-8 h-8 mx-auto mb-2 text-purple-400" />
                       <p className="text-sm text-gray-600">
-                        {zipFiles.frontend ? zipFiles.frontend.name : "Click to upload frontend"}
+                        {zipFiles.frontend
+                          ? zipFiles.frontend.name
+                          : "Click to upload frontend"}
                       </p>
                     </div>
                   </div>
@@ -282,17 +326,19 @@ export default function AddProject() {
                     Backend Zip
                   </label>
                   <div className="relative">
-                    <input 
-                      type="file" 
-                      name="backend" 
-                      accept=".zip" 
-                      onChange={handleZipChange} 
+                    <input
+                      type="file"
+                      name="backend"
+                      accept=".zip"
+                      onChange={handleZipChange}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     />
                     <div className="border-3 border-dashed border-purple-300 rounded-2xl p-6 text-center hover:border-purple-500 transition-all duration-300 hover:bg-purple-50 group-hover:transform group-hover:scale-105">
                       <Upload className="w-8 h-8 mx-auto mb-2 text-purple-400" />
                       <p className="text-sm text-gray-600">
-                        {zipFiles.backend ? zipFiles.backend.name : "Click to upload backend"}
+                        {zipFiles.backend
+                          ? zipFiles.backend.name
+                          : "Click to upload backend"}
                       </p>
                     </div>
                   </div>
@@ -307,17 +353,19 @@ export default function AddProject() {
                     Env File Zip
                   </label>
                   <div className="relative">
-                    <input 
-                      type="file" 
-                      name="envFile" 
-                      accept=".zip" 
-                      onChange={handleZipChange} 
+                    <input
+                      type="file"
+                      name="envFile"
+                      accept=".zip"
+                      onChange={handleZipChange}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     />
                     <div className="border-3 border-dashed border-purple-300 rounded-2xl p-6 text-center hover:border-purple-500 transition-all duration-300 hover:bg-purple-50 group-hover:transform group-hover:scale-105">
                       <Upload className="w-8 h-8 mx-auto mb-2 text-purple-400" />
                       <p className="text-sm text-gray-600">
-                        {zipFiles.envFile ? zipFiles.envFile.name : "Click to upload env file"}
+                        {zipFiles.envFile
+                          ? zipFiles.envFile.name
+                          : "Click to upload env file"}
                       </p>
                     </div>
                   </div>
@@ -332,17 +380,19 @@ export default function AddProject() {
                     DB File Zip
                   </label>
                   <div className="relative">
-                    <input 
-                      type="file" 
-                      name="dbFile" 
-                      accept=".zip" 
-                      onChange={handleZipChange} 
+                    <input
+                      type="file"
+                      name="dbFile"
+                      accept=".zip"
+                      onChange={handleZipChange}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     />
                     <div className="border-3 border-dashed border-purple-300 rounded-2xl p-6 text-center hover:border-purple-500 transition-all duration-300 hover:bg-purple-50 group-hover:transform group-hover:scale-105">
                       <Upload className="w-8 h-8 mx-auto mb-2 text-purple-400" />
                       <p className="text-sm text-gray-600">
-                        {zipFiles.dbFile ? zipFiles.dbFile.name : "Click to upload DB file"}
+                        {zipFiles.dbFile
+                          ? zipFiles.dbFile.name
+                          : "Click to upload DB file"}
                       </p>
                     </div>
                   </div>
@@ -360,17 +410,19 @@ export default function AddProject() {
                   📸 Project Screenshots
                 </label>
                 <div className="relative group">
-                  <input 
-                    type="file" 
-                    multiple 
-                    accept="image/*" 
-                    onChange={handleScreenshotsChange} 
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleScreenshotsChange}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
                   <div className="border-3 border-dashed border-pink-300 rounded-2xl p-8 text-center hover:border-pink-500 transition-all duration-300 hover:bg-pink-50 group-hover:transform group-hover:scale-105">
                     <Image className="w-12 h-12 mx-auto mb-4 text-pink-400" />
                     <p className="text-lg font-semibold text-gray-700 mb-2">
-                      {screenshots.length > 0 ? `${screenshots.length} images selected` : "Drop your screenshots here"}
+                      {screenshots.length > 0
+                        ? `${screenshots.length} images selected`
+                        : "Drop your screenshots here"}
                     </p>
                     <p className="text-sm text-gray-500">
                       Multiple images supported (JPG, PNG, GIF)

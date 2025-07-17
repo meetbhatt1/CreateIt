@@ -1,0 +1,671 @@
+// Working
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  loginUser,
+  signupUser,
+  clearError,
+  verifyOTP,
+  resendOTP,
+} from "../redux/AuthSlice";
+import { useNavigate } from "react-router-dom";
+
+const AuthPage = () => {
+  const dispatch = useDispatch();
+  const { isLoading, error, isAuthenticated, otpSent, otpVerified } =
+    useSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const [isLogin, setIsLogin] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [currentStep, setCurrentStep] = useState(1);
+  const [showOTP, setShowOTP] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [otpTimer, setOtpTimer] = useState(0);
+
+  // Use refs to prevent re-renders
+  const loginDataRef = useRef({
+    email: "",
+    password: "",
+  });
+
+  const signupDataRef = useRef({
+    // Personal Details
+    fullName: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+    dob: "",
+    profileImage: "😎",
+
+    // Educational Details
+    collegeName: "",
+    degreeName: "",
+    currentSemester: 1,
+
+    // Profiling Details
+    preferredLanguage: "",
+    pastProjects: [],
+    purpose: "",
+    github: "",
+    linkedin: "",
+  });
+
+  const emojis = ["😎", "🤓", "🚀", "💻", "🎯", "⚡", "🔥", "🌟", "🎮", "🦄"];
+  const [selectedEmoji, setSelectedEmoji] = useState();
+
+  // OTP Timer Effect
+  useEffect(() => {
+    let interval;
+    if (otpTimer > 0) {
+      interval = setInterval(() => {
+        setOtpTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [otpTimer]);
+
+  // Handle Redux state changes
+  useEffect(() => {
+    if (error) {
+      setShowModal(true);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (otpSent && !showOTP) {
+      setShowOTP(true);
+      setOtpTimer(300); // 5 minutes
+    }
+  }, [otpSent, showOTP]);
+
+  useEffect(() => {
+    if (otpVerified && isAuthenticated) {
+      // Redirect to dashboard
+      window.location.href = "/dashboard";
+    }
+  }, [otpVerified, isAuthenticated]);
+
+  // Memoized handlers to prevent re-renders
+  const handleLoginChange = useCallback((e) => {
+    loginDataRef.current = {
+      ...loginDataRef.current,
+      [e.target.name]: e.target.value,
+    };
+  }, []);
+
+  const handleSignupChange = useCallback((e) => {
+    signupDataRef.current = {
+      ...signupDataRef.current,
+      [e.target.name]: e.target.value,
+    };
+  }, []);
+
+  const handleEmojiSelect = useCallback(
+    (emoji) => {
+      setSelectedEmoji(emoji);
+      signupDataRef.current = {
+        ...signupDataRef.current,
+        profileImage: selectedEmoji,
+      };
+      // Force re-render only for emoji selection
+      setCurrentStep(currentStep);
+    },
+    [currentStep, selectedEmoji]
+  );
+
+  const handleLogin = useCallback(
+    async (e) => {
+      e.preventDefault();
+      const data = await dispatch(loginUser(loginDataRef.current));
+      if (data.payload !== "Login failed") {
+        console.log(data.payload);
+        setMsg(data.payload);
+        setShowSuccessModal(true);
+      }
+    },
+    [dispatch]
+  );
+
+  const handleSignup = useCallback(
+    async (e) => {
+      e.preventDefault();
+
+      const signupData = { ...signupDataRef.current };
+
+      // Convert pastProjects from comma-separated string to array
+      if (
+        signupData.pastProjects &&
+        typeof signupData.pastProjects === "string"
+      ) {
+        signupData.pastProjects = signupData.pastProjects
+          .split(",")
+          .map((p) => p.trim())
+          .filter(Boolean);
+      }
+
+      if (signupData.password !== signupData.confirmPassword) {
+        setShowModal(true);
+        return;
+      }
+
+      const data = await dispatch(signupUser(signupData));
+      console.log(data.payload);
+      if (data.payload != "Signup failed") {
+        console.log(signupData);
+        setShowSuccessModal(true);
+      }
+    },
+    [dispatch]
+  );
+
+  const handleOTPSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+      if (otp.length === 6) {
+        dispatch(
+          verifyOTP({
+            email: signupDataRef.current.email,
+            otp: otp,
+          })
+        );
+      }
+    },
+    [dispatch, otp]
+  );
+
+  const handleResendOTP = useCallback(() => {
+    if (otpTimer === 0) {
+      dispatch(resendOTP({ email: signupDataRef.current.email }));
+      setOtpTimer(300);
+    }
+  }, [dispatch, otpTimer]);
+
+  const handleGoogleAuth = useCallback(() => {
+    window.location.href = "http://localhost:8000/api/auth/google";
+  }, []);
+
+  const nextStep = useCallback(() => {
+    if (currentStep < 3) setCurrentStep(currentStep + 1);
+  }, [currentStep]);
+
+  const prevStep = useCallback(() => {
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
+  }, [currentStep]);
+
+  const closeModal = useCallback(() => {
+    setShowModal(false);
+    setShowSuccessModal(false);
+    dispatch(clearError());
+  }, [dispatch]);
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // OTP Verification Component
+  const OTPVerification = () => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <div className="text-6xl mb-4">📱</div>
+        <h3 className="text-2xl font-bold text-purple-600 mb-2">
+          Verify Your Email
+        </h3>
+        <p className="text-gray-600 mb-6">
+          We've sent a 6-digit code to {signupDataRef.current.email}
+        </p>
+      </div>
+
+      <form onSubmit={handleOTPSubmit}>
+        <input
+          type="text"
+          value={otp}
+          onChange={(e) =>
+            setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+          }
+          placeholder="Enter 6-digit OTP"
+          className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium text-center tracking-widest focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
+          maxLength="6"
+          autoComplete="one-time-code"
+        />
+
+        <button
+          type="submit"
+          disabled={otp.length !== 6 || isLoading}
+          className={`w-full mt-4 py-4 bg-purple-500 text-white rounded-2xl font-bold text-lg transition-all duration-300 hover:bg-purple-600 hover:scale-105 ${
+            otp.length !== 6 || isLoading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+        >
+          {isLoading ? "Verifying... ⏳" : "Verify & Continue 🚀"}
+        </button>
+      </form>
+
+      <div className="text-center">
+        {otpTimer > 0 ? (
+          <p className="text-gray-500">Resend OTP in {formatTime(otpTimer)}</p>
+        ) : (
+          <button
+            onClick={handleResendOTP}
+            className="text-purple-500 font-bold hover:text-purple-600 transition-colors"
+          >
+            Resend OTP 🔄
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  const ErrorModal = () =>
+    showModal && (
+      <div className="fixed inset-0 shadow-black shadow-2xl bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-3xl p-8 max-w-md w-full text-center transform">
+          <div className="text-6xl mb-4">😬</div>
+          <h3 className="text-xl font-bold text-red-500 mb-4">Oops!</h3>
+          <p className="text-gray-700 mb-6">
+            {error ||
+              (signupDataRef.current.password !==
+              signupDataRef.current.confirmPassword
+                ? "Passwords do not match! 🤦‍♂️"
+                : "Something went wrong!")}
+          </p>
+          <button
+            onClick={closeModal}
+            className="bg-red-500 text-white px-6 py-3 rounded-2xl font-bold hover:bg-red-600 transition-all duration-300 hover:scale-105"
+          >
+            Got it! 👍
+          </button>
+        </div>
+      </div>
+    );
+  const SuccessModal = () =>
+    showSuccessModal && (
+      <div className="fixed inset-0 shadow-black shadow-2xl bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-3xl p-8 max-w-md w-full text-center transform">
+          <div className="text-6xl mb-4">✨</div>
+          <h3 className="text-xl font-bold text-green-500 mb-4">Way to Go!</h3>
+          <p className="text-gray-700 mb-6">{msg}</p>
+          <button
+            onClick={() => {
+              closeModal;
+              navigate("/");
+            }}
+            className="bg-red-500 text-white px-6 py-3 rounded-2xl font-bold hover:bg-green-600 transition-all duration-300 hover:scale-105"
+          >
+            Done! 👍
+          </button>
+        </div>
+      </div>
+    );
+
+  const PersonalDetailsStep = () => (
+    <div className="space-y-4">
+      <h3 className="text-xl font-bold text-center text-purple-600 mb-6">
+        Personal Details 👤
+      </h3>
+      <div className="flex justify-center mb-6">
+        <div className="flex flex-wrap gap-2">
+          {emojis.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              onClick={() => handleEmojiSelect(emoji)}
+              className={`text-3xl p-2 rounded-2xl transition-all duration-300 hover:scale-110 ${
+                signupDataRef.current.profileImage === emoji
+                  ? "bg-purple-200 scale-110"
+                  : "hover:bg-gray-100"
+              }`}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <input
+        type="text"
+        name="fullName"
+        placeholder="Full Name 📝"
+        defaultValue={signupDataRef.current.fullName}
+        onChange={handleSignupChange}
+        className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
+        required
+      />
+
+      <input
+        type="email"
+        name="email"
+        placeholder="Email Address 📧"
+        defaultValue={signupDataRef.current.email}
+        onChange={handleSignupChange}
+        className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
+        required
+      />
+
+      <input
+        type="tel"
+        name="phone"
+        placeholder="Phone Number 📱"
+        defaultValue={signupDataRef.current.phone}
+        onChange={handleSignupChange}
+        className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
+        required
+      />
+
+      <input
+        type="date"
+        name="dob"
+        defaultValue={signupDataRef.current.dob}
+        onChange={handleSignupChange}
+        className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
+        required
+      />
+
+      <input
+        type="password"
+        name="password"
+        placeholder="Create Password 🔒"
+        defaultValue={signupDataRef.current.password}
+        onChange={handleSignupChange}
+        className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
+        required
+      />
+
+      <input
+        type="password"
+        name="confirmPassword"
+        placeholder="Confirm Password 🔐"
+        defaultValue={signupDataRef.current.confirmPassword}
+        onChange={handleSignupChange}
+        className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
+        required
+      />
+    </div>
+  );
+
+  const EducationStep = () => (
+    <div className="space-y-4">
+      <h3 className="text-xl font-bold text-center text-blue-600 mb-6">
+        Education Details 🎓
+      </h3>
+
+      <input
+        type="text"
+        name="collegeName"
+        placeholder="College/University Name 🏫"
+        defaultValue={signupDataRef.current.collegeName}
+        onChange={handleSignupChange}
+        className="w-full p-4 border-3 border-blue-200 rounded-2xl text-lg font-medium focus:border-blue-500 focus:outline-none transition-all duration-300 focus:scale-105"
+      />
+
+      <input
+        type="text"
+        name="degreeName"
+        placeholder="Degree Name 📜"
+        defaultValue={signupDataRef.current.degreeName}
+        onChange={handleSignupChange}
+        className="w-full p-4 border-3 border-blue-200 rounded-2xl text-lg font-medium focus:border-blue-500 focus:outline-none transition-all duration-300 focus:scale-105"
+      />
+
+      <input
+        type="number"
+        name="currentSemester"
+        placeholder="Current Semester 📚"
+        defaultValue={signupDataRef.current.currentSemester}
+        onChange={handleSignupChange}
+        className="w-full p-4 border-3 border-blue-200 rounded-2xl text-lg font-medium focus:border-blue-500 focus:outline-none transition-all duration-300 focus:scale-105"
+        min="1"
+        max="12"
+      />
+    </div>
+  );
+
+  const ProfilingStep = () => (
+    <div className="space-y-4">
+      <h3 className="text-xl font-bold text-center text-green-600 mb-6">
+        Tell Us About You! 🚀
+      </h3>
+
+      <select
+        name="preferredLanguage"
+        defaultValue={signupDataRef.current.preferredLanguage}
+        onChange={handleSignupChange}
+        className="w-full p-4 border-3 border-green-200 rounded-2xl text-lg font-medium focus:border-green-500 focus:outline-none transition-all duration-300 focus:scale-105"
+      >
+        <option value="">Preferred Programming Language 💻</option>
+        <option value="javascript">JavaScript</option>
+        <option value="python">Python</option>
+        <option value="java">Java</option>
+        <option value="cpp">C++</option>
+        <option value="react">React</option>
+        <option value="nodejs">Node.js</option>
+        <option value="other">Other</option>
+      </select>
+
+      <textarea
+        name="pastProjects"
+        placeholder="Past Projects (comma separated) 🛠️"
+        defaultValue={signupDataRef.current.pastProjects}
+        onChange={handleSignupChange}
+        className="w-full p-4 border-3 border-green-200 rounded-2xl text-lg font-medium focus:border-green-500 focus:outline-none transition-all duration-300 focus:scale-105 h-24 resize-none"
+      />
+
+      <select
+        name="purpose"
+        defaultValue={signupDataRef.current.purpose}
+        onChange={handleSignupChange}
+        className="w-full p-4 border-3 border-green-200 rounded-2xl text-lg font-medium focus:border-green-500 focus:outline-none transition-all duration-300 focus:scale-105"
+        required
+      >
+        <option value="">What brings you here? 🎯</option>
+        <option value="contributor">I want to contribute to projects 🤝</option>
+        <option value="mock-interview">I need mock interviews 🎤</option>
+        <option value="opensource-consumer">
+          I want to use open source projects 📦
+        </option>
+        <option value="other">Other 🌟</option>
+      </select>
+
+      <input
+        type="url"
+        name="github"
+        placeholder="GitHub Profile (optional) 🐱"
+        defaultValue={signupDataRef.current.github}
+        onChange={handleSignupChange}
+        className="w-full p-4 border-3 border-green-200 rounded-2xl text-lg font-medium focus:border-green-500 focus:outline-none transition-all duration-300 focus:scale-105"
+      />
+
+      <input
+        type="url"
+        name="linkedin"
+        placeholder="LinkedIn Profile (optional) 💼"
+        defaultValue={signupDataRef.current.linkedin}
+        onChange={handleSignupChange}
+        className="w-full p-4 border-3 border-green-200 rounded-2xl text-lg font-medium focus:border-green-500 focus:outline-none transition-all duration-300 focus:scale-105"
+      />
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-purple-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md relative overflow-hidden">
+        {/* Fun decorative elements */}
+        <div className="absolute -top-4 -right-4 text-6xl opacity-20 animate-spin">
+          ⚡
+        </div>
+        <div className="absolute -bottom-4 -left-4 text-6xl opacity-20 animate-bounce">
+          🚀
+        </div>
+
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-black text-purple-600 mb-2">
+            CreateIt 🤖
+          </h1>
+          <p className="text-gray-600 font-medium">
+            {showOTP
+              ? "Almost there! 🎯"
+              : isLogin
+              ? "Welcome back, coder! 👋"
+              : "Join the coolest dev community! 🎉"}
+          </p>
+        </div>
+
+        {/* OTP Verification */}
+        {showOTP ? (
+          <OTPVerification />
+        ) : (
+          <>
+            {/* Tab Switcher */}
+            <div className="flex bg-gray-100 rounded-2xl p-2 mb-8">
+              <button
+                onClick={() => {
+                  setIsLogin(true);
+                  setCurrentStep(1);
+                }}
+                className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all duration-300 ${
+                  isLogin
+                    ? "bg-purple-500 text-white shadow-lg transform scale-105"
+                    : "text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                Login 🔑
+              </button>
+              <button
+                onClick={() => {
+                  setIsLogin(false);
+                  setCurrentStep(1);
+                }}
+                className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all duration-300 ${
+                  !isLogin
+                    ? "bg-purple-500 text-white shadow-lg transform scale-105"
+                    : "text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                Sign Up 🎯
+              </button>
+            </div>
+
+            {/* Login Form */}
+            {isLogin ? (
+              <div>
+                <div className="space-y-6">
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Email Address 📧"
+                    defaultValue={loginDataRef.current.email}
+                    onChange={handleLoginChange}
+                    className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
+                    required
+                  />
+                  <input
+                    type="password"
+                    name="password"
+                    placeholder="Password 🔒"
+                    defaultValue={loginDataRef.current.password}
+                    onChange={handleLoginChange}
+                    className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
+                    required
+                  />
+                  <button
+                    onClick={handleLogin}
+                    disabled={isLoading}
+                    className={`w-full py-4 bg-purple-500 text-white rounded-2xl font-bold text-lg transition-all duration-300 hover:bg-purple-600 hover:scale-105 ${
+                      isLoading ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                  >
+                    {isLoading ? "Logging in... ⏳" : "Login & Code! 🚀"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Signup Form */
+              <div>
+                {/* Step Progress */}
+                <div className="flex justify-center mb-6">
+                  <div className="flex space-x-2">
+                    {[1, 2, 3].map((step) => (
+                      <div
+                        key={step}
+                        className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                          step <= currentStep ? "bg-purple-500" : "bg-gray-300"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {currentStep === 1 && <PersonalDetailsStep />}
+                {currentStep === 2 && <EducationStep />}
+                {currentStep === 3 && <ProfilingStep />}
+
+                {/* Navigation Buttons */}
+                <div className="flex justify-between mt-8">
+                  {currentStep > 1 && (
+                    <button
+                      type="button"
+                      onClick={prevStep}
+                      className="px-6 py-3 bg-gray-300 text-gray-700 rounded-2xl font-bold hover:bg-gray-400 transition-all duration-300 hover:scale-105"
+                    >
+                      ← Back
+                    </button>
+                  )}
+                  {currentStep < 3 ? (
+                    <button
+                      type="button"
+                      onClick={nextStep}
+                      className="ml-auto px-6 py-3 bg-purple-500 text-white rounded-2xl font-bold hover:bg-purple-600 transition-all duration-300 hover:scale-105"
+                    >
+                      Next →
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleSignup}
+                      disabled={isLoading}
+                      className={`ml-auto px-6 py-3 bg-green-500 text-white rounded-2xl font-bold hover:bg-green-600 transition-all duration-300 hover:scale-105 ${
+                        isLoading ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                    >
+                      {isLoading
+                        ? "Creating Account... ⏳"
+                        : "Join CodeBuddy! 🎉"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Social Login */}
+            <div className="mt-8 pt-6 border-t-2 border-gray-100">
+              <p className="text-center text-gray-500 mb-4 font-medium">
+                or continue with
+              </p>
+              <div className="flex justify-center space-x-4">
+                <button
+                  onClick={handleGoogleAuth}
+                  className="w-12 h-12 bg-red-500 text-white rounded-xl font-bold hover:scale-110 transition-all duration-300"
+                >
+                  G
+                </button>
+                <button className="w-12 h-12 bg-gray-800 text-white rounded-xl font-bold hover:scale-110 transition-all duration-300">
+                  G
+                </button>
+                <button className="w-12 h-12 bg-blue-600 text-white rounded-xl font-bold hover:scale-110 transition-all duration-300">
+                  D
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+      <ErrorModal />
+      <SuccessModal />
+    </div>
+  );
+};
+
+export default AuthPage;

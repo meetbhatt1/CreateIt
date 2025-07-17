@@ -1,0 +1,92 @@
+import Joi from "joi";
+
+// Auth Validation
+const registerValidation = Joi.object({
+    fullName: Joi.string().min(3).required().messages({
+        'string.empty': '😶 “Forgot to introduce yourself? Say your name!”',
+        'string.min': '🧒 “Short names are cool, but 3+ letters, please!”',
+    }),
+    email: Joi.string().email().required().messages({
+        'string.empty': '📩 “Email is a must — how else do we spam you?”',
+        'string.email': '🧠 “That’s not an email. It’s a cry for help.”',
+    }),
+    phone: Joi.string().pattern(/^[6-9]\d{9}$/).required().messages({
+        'string.pattern.base': '📞 Call me maybe? That number looks sus...',
+    }),
+    password: Joi.string().min(6).required().messages({
+        'string.empty': '🛑 “No password? You brave?”',
+        'string.min': '🧠 Password should be at least 6 characters!',
+    }),
+    dob: Joi.date().required().messages({
+        'date.base': '🎂 “Time traveler? Give us a real birthday.”',
+    }),
+    profileImage: Joi.string().optional().messages({
+        'string.empty': '😶 “Pick a face. Any face.”'
+    }),
+    collegeName: Joi.string().optional().messages({
+        'string.empty': '🏫 “Even Hogwarts had a name.”',
+    }),
+    degreeName: Joi.string().optional().messages({
+        'string.empty': '🎓 “Tell us what you’re suffering through.”',
+    }),
+    currentSemester: Joi.number().optional().messages({
+        'number.base': '📚 “Enter your sem — or are you eternally in the 3rd?”',
+    }),
+    preferredLanguage: Joi.string().optional().messages({
+        'string.empty': '💬 “JavaScript? Python? Atleast HTML?”'
+    }),
+    pastProjects: Joi.array().items(Joi.string()).optional().messages({
+        'array.base': '🧠 “Projects go in a list, not a sentence.”',
+    }),
+    purpose: Joi.string().valid('contributor', 'mock-interview', 'opensource-consumer', 'other').optional(),
+    github: Joi.string().uri().optional(),
+    linkedin: Joi.string().uri().optional()
+});
+
+// Register Middleware
+export const validateRegister = (req, res, next) => {
+    const { error } = registerValidation.validate(req.body, { abortEarly: false });
+
+    if (error) {
+        const messages = error.details.map(err => err.message);
+        return res.status(400).json({ errors: messages });
+    }
+
+    next();
+};
+
+// Login Validation
+const loginValidation = Joi.object({
+    email: Joi.string().email().required().messages({
+        'string.empty': '📭 “No email? Then how will we haunt your inbox?”',
+        'string.email': '📧 “That doesn’t look like a real email. Try again!”'
+    }),
+    password: Joi.string().min(6).required().messages({
+        'string.empty': '🔒 “Password please! We’re not psychic.”',
+        'string.min': '🤏 “A tiny password? Make it at least 6 chars.”'
+    }),
+});
+
+// Login Middleware
+export const validateLogin = (req, res, next) => {
+    const { error } = loginValidation.validate(req.body, { abortEarly: false });
+    if (error) {
+        const errorMessages = error.details.map(detail => detail.message);
+        return res.status(400).json({ errors: errorMessages });
+    }
+    next();
+};
+
+// Google 
+export const requireAuth = (req, res, next) => {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ msg: "Unauthorized" });
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
+        next();
+    } catch (err) {
+        return res.status(403).json({ msg: "Invalid Token" });
+    }
+};

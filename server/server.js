@@ -13,7 +13,7 @@ DBConnection()
 
 const app = express()
 app.use(cors({
-    origin: 'http://localhost:5173', // React frontend
+    origin: 'https://svn.createit.in', // React frontend
     credentials: true
 }));
 app.use(express.json());

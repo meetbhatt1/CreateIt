@@ -28,10 +28,6 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: "😎"
     },
-    googleId: {
-        type: String,
-    },
-
     // Educational Details
     collegeName: String,
     degreeName: String,
@@ -54,8 +50,19 @@ const userSchema = new mongoose.Schema({
     rating: {
         type: Number,
         default: 0
-    }
-
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
+    otp: String,
+    otpExpiry: Date,
+    // For Google OAuth users
+    googleId: String,
+    isGoogleAuth: {
+        type: Boolean,
+        default: false
+    },
 }, { timestamps: true });
 
 export default mongoose.models.User || mongoose.model("User", userSchema);

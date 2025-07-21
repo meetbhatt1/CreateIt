@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CreateIt Kanban Board</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;600;700&family=Fredoka:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Comic Neue", cursive;
+        background: linear-gradient(135deg, #e8f2ff 0%, #f0e6ff 100%);
+        background-attachment: fixed;
+        min-height: 100vh;
+        padding: 20px;
+        color: #2c3e50;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 25px;
+        padding: 20px 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transform: rotate(-1deg);
+        position: relative;
+        z-index: 10;
+      }
+
+      .logo {
+        font-family: "Fredoka", sans-serif;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+        text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 20px;
+      }
+
+      .action-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 3px solid white;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        transform: rotate(10deg);
+      }
+
+      .action-btn:hover {
+        transform: rotate(-10deg) scale(1.1);
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .kanban-header {
+        text-align: center;
+        margin-bottom: 30px;
+        transform: rotate(1deg);
+      }
+
+      .kanban-title {
+        font-family: "Fredoka", sans-serif;
+        font-size: 2.8rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 0px rgba(102, 126, 234, 0.1);
+      }
+
+      .kanban-subtitle {
+        font-size: 1.4rem;
+        color: #667eea;
+        font-weight: 600;
+      }
+
+      .kanban-container {
+        display: flex;
+        gap: 25px;
+        margin-top: 20px;
+      }
+
+      .column {
+        flex: 1;
+        background: white;
+        border-radius: 25px;
+        padding: 25px;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+        border: 3px solid #d6d8ff;
+        min-height: 600px;
+        transform: rotate(-0.5deg);
+        transition: all 0.3s ease;
+      }
+
+      .column:nth-child(even) {
+        transform: rotate(0.5deg);
+      }
+
+      .column:hover {
+        transform: translateY(-10px) rotate(1deg);
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
+      }
+
+      .column-header {
+        background: linear-gradient(135deg, #b794f6, #9f7aea);
+        color: white;
+        padding: 15px;
+        border-radius: 20px;
+        margin-bottom: 25px;
+        text-align: center;
+        font-size: 1.8rem;
+        font-weight: 600;
+        position: relative;
+        transform: rotate(-1deg);
+      }
+
+      .column-header::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.2) 0%,
+          transparent 70%
+        );
+        border-radius: 20px;
+      }
+
+      .tasks-count {
+        background: #ff6b6b;
+        color: white;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        position: absolute;
+        top: -15px;
+        right: -15px;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        transform: rotate(15deg);
+      }
+
+      .tasks-container {
+        min-height: 500px;
+      }
+
+      .task {
+        background: linear-gradient(135deg, #f7fafc, #e2e8f0);
+        border-radius: 20px;
+        padding: 20px;
+        margin-bottom: 20px;
+        cursor: grab;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        border: 2px solid #cbd5e0;
+        transform: rotate(0.5deg);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .task:nth-child(even) {
+        transform: rotate(-0.5deg);
+      }
+
+      .task:hover {
+        transform: scale(1.02) rotate(1deg);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        border-color: #9f7aea;
+      }
+
+      .task::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          45deg,
+          transparent,
+          rgba(255, 255, 255, 0.3),
+          transparent
+        );
+        z-index: 1;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .task:hover::before {
+        opacity: 1;
+        animation: shine 1.5s infinite;
+      }
+
+      .task-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .task-title {
+        font-family: "Fredoka", sans-serif;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2d3748;
+        flex: 1;
+      }
+
+      .priority {
+        padding: 6px 12px;
+        border-radius: 15px;
+        font-weight: bold;
+        font-size: 0.9rem;
+        transform: rotate(2deg);
+      }
+
+      .high {
+        background: linear-gradient(135deg, #ff6b6b, #ff9a9e);
+        color: white;
+      }
+
+      .medium {
+        background: linear-gradient(135deg, #ffd166, #ffb347);
+        color: #333;
+      }
+
+      .low {
+        background: linear-gradient(135deg, #4ecdc4, #38a169);
+        color: white;
+      }
+
+      .task-body {
+        margin-bottom: 15px;
+        color: #4a5568;
+        line-height: 1.6;
+        padding: 10px 0;
+      }
+
+      .task-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+        padding-top: 10px;
+        border-top: 2px dashed #b794f6;
+      }
+
+      .assignee {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1.1rem;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        border: 2px solid white;
+      }
+
+      .due-date {
+        background: #6a67ce;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        transform: rotate(-1deg);
+      }
+
+      .xp-badge {
+        background: linear-gradient(135deg, #48bb78, #38a169);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-top: 10px;
+      }
+
+      .controls {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-top: 40px;
+      }
+
+      .btn {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        padding: 18px 35px;
+        border-radius: 30px;
+        font-size: 1.3rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        transform: rotate(-1deg);
+        font-family: "Comic Neue", cursive;
+      }
+
+      .btn:hover {
+        transform: translateY(-5px) rotate(-2deg);
+        box-shadow: 0 12px 30px rgba(102, 126, 234, 0.5);
+      }
+
+      .btn::after {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.2) 0%,
+          transparent 70%
+        );
+        transform: rotate(30deg);
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .btn:hover::after {
+        opacity: 1;
+      }
+
+      .meme-container {
+        display: flex;
+        justify-content: center;
+        gap: 25px;
+        margin-top: 50px;
+        flex-wrap: wrap;
+      }
+
+      .meme-box {
+        background: white;
+        border-radius: 25px;
+        padding: 20px;
+        width: 220px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        transform: rotate(3deg);
+        border: 3px solid #d6d8ff;
+        transition: all 0.3s ease;
+      }
+
+      .meme-box:nth-child(even) {
+        transform: rotate(-3deg);
+      }
+
+      .meme-box:hover {
+        transform: scale(1.1) rotate(0deg);
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
+      }
+
+      .meme-title {
+        font-family: "Fredoka", sans-serif;
+        font-weight: 700;
+        color: #667eea;
+        margin-bottom: 15px;
+        font-size: 1.3rem;
+      }
+
+      .meme-content {
+        font-size: 2.5rem;
+        margin: 10px 0;
+      }
+
+      .meme-caption {
+        color: #4a5568;
+        font-size: 1.1rem;
+        margin-top: 10px;
+      }
+
+      .floating {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: linear-gradient(135deg, #ffd166, #ffb347);
+        color: #333;
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.2rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        z-index: 100;
+        animation: float 3s ease-in-out infinite;
+        transform: rotate(5deg);
+        border: 3px solid white;
+      }
+
+      /* Animations */
+      @keyframes shine {
+        0% {
+          background-position: -100%;
+        }
+        100% {
+          background-position: 200%;
+        }
+      }
+
+      @keyframes float {
+        0% {
+          transform: translateY(0px) rotate(0deg);
+        }
+        50% {
+          transform: translateY(-20px) rotate(5deg);
+        }
+        100% {
+          transform: translateY(0px) rotate(0deg);
+        }
+      }
+
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-15px);
+        }
+      }
+
+      .bounce {
+        animation: bounce 2s infinite;
+      }
+
+      /* Responsive design */
+      @media (max-width: 1200px) {
+        .kanban-container {
+          flex-wrap: wrap;
+        }
+
+        .column {
+          min-width: 45%;
+          margin-bottom: 30px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .kanban-container {
+          flex-direction: column;
+        }
+
+        .kanban-title {
+          font-size: 2.2rem;
+        }
+
+        .kanban-subtitle {
+          font-size: 1.2rem;
+        }
+
+        .logo {
+          font-size: 1.8rem;
+        }
+
+        .header-actions {
+          gap: 10px;
+        }
+
+        .action-btn {
+          width: 45px;
+          height: 45px;
+          font-size: 1.2rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="logo"><i class="fas fa-code"></i> CreateIt</div>
+        <div class="header-actions">
+          <div class="action-btn">
+            <i class="fas fa-bell"></i>
+          </div>
+          <div class="action-btn">
+            <i class="fas fa-user"></i>
+          </div>
+          <div class="action-btn">
+            <i class="fas fa-cog"></i>
+          </div>
+        </div>
+      </header>
+
+      <div class="kanban-header">
+        <h1 class="kanban-title">🎨 Cartoon Kanban Board</h1>
+        <p class="kanban-subtitle">Drag, Drop, and Create with Fun!</p>
+      </div>
+
+      <div class="kanban-container">
+        <!-- To Do Column -->
+        <div class="column">
+          <div class="column-header">
+            <span>TO DO</span>
+            <div class="tasks-count">4</div>
+          </div>
+          <div class="tasks-container" id="todo">
+            <div class="task" draggable="true">
+              <div class="task-header">
+                <div class="task-title">Fix Login Bug 🐛</div>
+                <div class="priority high">🔥 HIGH</div>
+              </div>
+              <div class="task-body">
+                Users can't login when cookies are enabled. Need to debug the
+                authentication flow.
+              </div>
+              <div class="xp-badge">+50 XP</div>
+              <div class="task-footer">
+                <div class="assignee">
+                  <div class="avatar">JS</div>
+                  <span>John Smith</span>
+                </div>
+                <div class="due-date">📅 Tomorrow</div>
+              </div>
+            </div>
+
+            <div class="task" draggable="true">
+              <div class="task-header">
+                <div class="task-title">Add Confetti 🎉</div>
+                <div class="priority medium">🕒 MEDIUM</div>
+              </div>
+              <div class="task-body">
+                Implement confetti animation when users complete tasks. Because
+                who doesn't love confetti?
+              </div>
+              <div class="xp-badge">+30 XP</div>
+              <div class="task-footer">
+                <div class="assignee">
+                  <div class="avatar">SD</div>
+                  <span>Sarah Dev</span>
+                </div>
+                <div class="due-date">📅 Next Week</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- In Progress Column -->
+        <div class="column">
+          <div class="column-header">
+            <span>IN PROGRESS</span>
+            <div class="tasks-count">3</div>
+          </div>
+          <div class="tasks-container" id="in-progress">
+            <div class="task" draggable="true">
+              <div class="task-header">
+                <div class="task-title">Design Dashboard ✨</div>
+                <div class="priority high">🔥 HIGH</div>
+              </div>
+              <div class="task-body">
+                Create a dashboard that makes users say "Wow!" instead of
+                "Where's the button?"
+              </div>
+              <div class="xp-badge">+75 XP</div>
+              <div class="task-footer">
+                <div class="assignee">
+                  <div class="avatar">AD</div>
+                  <span>Alex Designer</span>
+                </div>
+                <div class="due-date">📅 Friday</div>
+              </div>
+            </div>
+
+            <div class="task" draggable="true">
+              <div class="task-header">
+                <div class="task-title">API Integration 🔌</div>
+                <div class="priority low">🐢 LOW</div>
+              </div>
+              <div class="task-body">
+                Connect with coffee machine API to brew ☕ when builds fail.
+                Critical for developer sanity!
+              </div>
+              <div class="xp-badge">+40 XP</div>
+              <div class="task-footer">
+                <div class="assignee">
+                  <div class="avatar">CD</div>
+                  <span>Caffeine Dev</span>
+                </div>
+                <div class="due-date">📅 Next Month</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Review Column -->
+        <div class="column">
+          <div class="column-header">
+            <span>REVIEW</span>
+            <div class="tasks-count">2</div>
+          </div>
+          <div class="tasks-container" id="review">
+            <div class="task" draggable="true">
+              <div class="task-header">
+                <div class="task-title">Cat Filter 🐱</div>
+                <div class="priority medium">🕒 MEDIUM</div>
+              </div>
+              <div class="task-body">
+                Add cat ears filter to user profile pictures. Because every app
+                needs more cats!
+              </div>
+              <div class="xp-badge">+35 XP</div>
+              <div class="task-footer">
+                <div class="assignee">
+                  <div class="avatar">FD</div>
+                  <span>Felix Dev</span>
+                </div>
+                <div class="due-date">📅 Today</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Done Column -->
+        <div class="column">
+          <div class="column-header">
+            <span>DONE</span>
+            <div class="tasks-count">5</div>
+          </div>
+          <div class="tasks-container" id="done">
+            <div class="task" draggable="true">
+              <div class="task-header">
+                <div class="task-title">Fix Typo ✏️</div>
+                <div class="priority low">🐢 LOW</div>
+              </div>
+              <div class="task-body">
+                Changed "teh" to "the". Saved the company from international
+                embarrassment.
+              </div>
+              <div class="xp-badge">+15 XP</div>
+              <div class="task-footer">
+                <div class="assignee">
+                  <div class="avatar">GD</div>
+                  <span>Grammar Dev</span>
+                </div>
+                <div class="due-date">📅 Yesterday</div>
+              </div>
+            </div>
+
+            <div class="task" draggable="true">
+              <div class="task-header">
+                <div class="task-title">Setup CI/CD 🚀</div>
+                <div class="priority high">🔥 HIGH</div>
+              </div>
+              <div class="task-body">
+                Implemented automated deployment pipeline. No more "works on my
+                machine" excuses!
+              </div>
+              <div class="xp-badge">+60 XP</div>
+              <div class="task-footer">
+                <div class="assignee">
+                  <div class="avatar">OD</div>
+                  <span>Ops Dev</span>
+                </div>
+                <div class="due-date">📅 Last Week</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn">
+          <i class="fas fa-plus-circle"></i> Add New Task
+        </button>
+        <button class="btn"><i class="fas fa-sync-alt"></i> Reset Board</button>
+        <button class="btn">
+          <i class="fas fa-download"></i> Export Tasks
+        </button>
+      </div>
+
+      <div class="meme-container">
+        <div class="meme-box">
+          <div class="meme-title">When you fix a bug</div>
+          <div class="meme-content">💪😎👍</div>
+          <div class="meme-caption">I'm a coding genius!</div>
+        </div>
+        <div class="meme-box">
+          <div class="meme-title">When you find a new bug</div>
+          <div class="meme-content">🤦‍♂️🤯😭</div>
+          <div class="meme-caption">Why does this happen?!</div>
+        </div>
+        <div class="meme-box">
+          <div class="meme-title">When PR gets approved</div>
+          <div class="meme-content">🎉🍾🥳</div>
+          <div class="meme-caption">Celebration time!</div>
+        </div>
+      </div>
+
+      <div class="floating bounce">
+        <i class="fas fa-dragon"></i>
+      </div>
+    </div>
+
+    <script>
+      // Drag and drop functionality
+      document.addEventListener("DOMContentLoaded", function () {
+        const tasks = document.querySelectorAll(".task");
+        const columns = document.querySelectorAll(".tasks-container");
+
+        // Make tasks draggable
+        tasks.forEach((task) => {
+          task.addEventListener("dragstart", () => {
+            task.classList.add("dragging");
+            task.style.opacity = "0.7";
+          });
+
+          task.addEventListener("dragend", () => {
+            task.classList.remove("dragging");
+            task.style.opacity = "1";
+            updateTaskCounts();
+            showConfetti();
+          });
+        });
+
+        // Make columns drop targets
+        columns.forEach((column) => {
+          column.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(column, e.clientY);
+            const draggable = document.querySelector(".dragging");
+
+            if (!afterElement) {
+              column.appendChild(draggable);
+            } else {
+              column.insertBefore(draggable, afterElement);
+            }
+          });
+        });
+
+        // Helper function to determine drop position
+        function getDragAfterElement(container, y) {
+          const draggableElements = [
+            ...container.querySelectorAll(".task:not(.dragging)"),
+          ];
+
+          return draggableElements.reduce(
+            (closest, child) => {
+              const box = child.getBoundingClientRect();
+              const offset = y - box.top - box.height / 2;
+
+              if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+              } else {
+                return closest;
+              }
+            },
+            { offset: Number.NEGATIVE_INFINITY }
+          ).element;
+        }
+
+        // Update task counts
+        function updateTaskCounts() {
+          document.querySelectorAll(".column").forEach((column) => {
+            const columnId = column.querySelector(".tasks-container").id;
+            const taskCount =
+              column.querySelector(".tasks-container").children.length;
+            column.querySelector(".tasks-count").textContent = taskCount;
+          });
+        }
+
+        // Show confetti animation
+        function showConfetti() {
+          const confetti = document.createElement("div");
+          confetti.innerHTML = "🎉";
+          confetti.style.position = "fixed";
+          confetti.style.fontSize = "2rem";
+          confetti.style.zIndex = "1000";
+          confetti.style.pointerEvents = "none";
+
+          // Random position
+          const x = Math.random() * window.innerWidth;
+          confetti.style.left = `${x}px`;
+          confetti.style.top = "-50px";
+
+          document.body.appendChild(confetti);
+
+          // Animate confetti
+          const animation = confetti.animate(
+            [
+              { top: "-50px", opacity: 1, transform: "rotate(0deg)" },
+              {
+                top: `${window.innerHeight + 50}px`,
+                opacity: 0,
+                transform: "rotate(360deg)",
+              },
+            ],
+            {
+              duration: 2000,
+              easing: "cubic-bezier(0.1, 0.8, 0.2, 1)",
+            }
+          );
+
+          animation.onfinish = () => confetti.remove();
+        }
+
+        // Add floating dragon animation
+        const dragon = document.querySelector(".floating");
+        dragon.addEventListener("click", () => {
+          dragon.innerHTML = '<i class="fas fa-fire"></i>';
+          dragon.style.background = "linear-gradient(135deg, #ff6b6b, #ff9a9e)";
+          dragon.style.color = "#fff";
+          dragon.style.transform = "scale(1.5) rotate(10deg)";
+
+          setTimeout(() => {
+            dragon.innerHTML = '<i class="fas fa-dragon"></i>';
+            dragon.style.background =
+              "linear-gradient(135deg, #ffd166, #ffb347)";
+            dragon.style.color = "#333";
+            dragon.style.transform = "scale(1) rotate(5deg)";
+          }, 1000);
+        });
+
+        // Add hover effects to meme boxes
+        document.querySelectorAll(".meme-box").forEach((box) => {
+          box.addEventListener("mouseenter", () => {
+            const isEven =
+              [...document.querySelectorAll(".meme-box")].indexOf(box) % 2 ===
+              1;
+            box.style.transform = isEven
+              ? "rotate(-5deg) scale(1.1)"
+              : "rotate(5deg) scale(1.1)";
+            box.style.boxShadow = "0 15px 30px rgba(102, 126, 234, 0.3)";
+          });
+
+          box.addEventListener("mouseleave", () => {
+            const isEven =
+              [...document.querySelectorAll(".meme-box")].indexOf(box) % 2 ===
+              1;
+            box.style.transform = isEven ? "rotate(-3deg)" : "rotate(3deg)";
+            box.style.boxShadow = "0 10px 25px rgba(0,0,0,0.1)";
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

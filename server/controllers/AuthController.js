@@ -81,3 +81,63 @@ export const LoginUser = async (req, res) => {
         res.status(500).json({ message: "😵 “Our server is doing cartwheels right now...”" });
     }
 };
+
+// Add to AuthController.js
+export const sendOTP = async (req, res) => {
+    const { email } = req.body;
+    const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
+
+    // Save OTP to DB with expiry (add to User model)
+    await User.findOneAndUpdate(
+        { email },
+        { otp, otpExpiry: Date.now() + 15 * 60 * 1000 } // 15 mins expiry
+    );
+
+    // Send email (implement this service)
+    await sendEmail({
+        to: email,
+        subject: 'Your CreateIt Verification Code',
+        text: `Your OTP is ${otp}`
+    });
+
+    res.status(200).json({ message: "OTP sent to email" });
+};
+
+export const verifyOTP = async (req, res) => {
+    const { email, otp } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user || user.otp !== otp || user.otpExpiry < Date.now()) {
+        return res.status(400).json({ message: "Invalid/expired OTP" });
+    }
+
+    // Mark user as verified
+    user.isVerified = true;
+    user.otp = undefined;
+    user.otpExpiry = undefined;
+    await user.save();
+
+    res.status(200).json({ message: "Email verified successfully!" });
+};
+
+export const googleAuth = async (req, res) => {
+    let user = await User.findOne({ email: req.user.email });
+
+    if (!user) {
+        // Create new user for Google auth
+        user = await User.create({
+            email: req.user.email,
+            fullName: req.user.displayName,
+            profileImage: req.user.photos[0].value,
+            isGoogleAuth: true,
+            isVerified: true // Google users auto-verified
+        });
+    }
+
+    const token = jwt.sign(
+        { id: req.user._id, email: req.user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+    );
+    res.redirect(`http://localhost:5173/oauth-success?token=${token}`);
+}

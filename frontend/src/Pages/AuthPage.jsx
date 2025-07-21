@@ -568,13 +568,13 @@ const AuthPage = () => {
                     placeholder="Password 🔒"
                     defaultValue={loginDataRef.current.password}
                     onChange={handleLoginChange}
-                    className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
+                    className="input"
                     required
                   />
                   <button
                     onClick={handleLogin}
                     disabled={isLoading}
-                    className={`w-full py-4 bg-purple-500 text-white rounded-2xl font-bold text-lg transition-all duration-300 hover:bg-purple-600 hover:scale-105 ${
+                    className={`input ${
                       isLoading ? "opacity-50 cursor-not-allowed" : ""
                     }`}
                   >

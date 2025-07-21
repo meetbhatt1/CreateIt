@@ -8,9 +8,18 @@ import AuthPage from "./Pages/AuthPage";
 import ProjectsDashboard from "./components/Project/ProjectDashboard";
 import { ProjectCard } from "./components/ui/ProjectCard";
 import AddProject from "./components/Project/AddProject";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import ProjectPage from "./Pages/ProjectPage";
 
 const App = () => {
+  const user = localStorage.getItem("user");
+  const isLoggedIn = user && user.length > 0;
+
   return (
     <Router>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 bg-fixed font-['Comic_Neue']">
@@ -20,13 +29,27 @@ const App = () => {
             <LeftSidebar />
           </div>
           <div>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/add-project" element={<AddProject />} />
-              <Route path="/auth" element={<AuthPage />} />
-              <Route path="/projects-dashboard" element={<ProjectsDashboard />} />
-              {/* Add more routes as needed */}
-            </Routes>
+            <ProjectPage />
+            {/* <Routes>
+              <Route
+                path="/"
+                element={isLoggedIn ? <HomePage /> : <Navigate to="/auth" />}
+              />
+              <Route
+                path="/auth"
+                element={isLoggedIn ? <Navigate to="/" /> : <AuthPage />}
+              />
+              <Route
+                path="/add-project"
+                element={isLoggedIn ? <AddProject /> : <Navigate to="/auth" />}
+              />
+              <Route
+                path="/projects-dashboard"
+                element={
+                  isLoggedIn ? <ProjectsDashboard /> : <Navigate to="/auth" />
+                }
+              />
+            </Routes> */}
           </div>
           <div className="hidden xl:block">
             <RightSidebar />

@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CreateIt - Project Workflow</title>
+    <style>
+      /* styles.css */
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f7fa;
+      }
+
+      h2,
+      h3,
+      h4 {
+        color: #2c3e50;
+        margin-top: 0;
+      }
+
+      h2 {
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+      }
+
+      .form-section {
+        background: white;
+        border-radius: 8px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      input[type="text"],
+      input[type="email"],
+      textarea,
+      select {
+        width: 100%;
+        padding: 12px;
+        margin: 8px 0 20px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+        transition: border 0.3s;
+      }
+
+      input:focus,
+      textarea:focus,
+      select:focus {
+        border-color: #3498db;
+        outline: none;
+      }
+
+      textarea {
+        min-height: 100px;
+        resize: vertical;
+      }
+
+      button {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background 0.3s;
+      }
+
+      button:hover {
+        background-color: #2980b9;
+      }
+
+      .role-box {
+        background: #f8f9fa;
+        border-left: 4px solid #3498db;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 4px;
+      }
+
+      .status-pending {
+        color: #f39c12;
+        font-weight: 500;
+      }
+
+      .status-approved {
+        color: #27ae60;
+        font-weight: 500;
+      }
+
+      .status-rejected {
+        color: #e74c3c;
+        font-weight: 500;
+      }
+
+      #memberFields {
+        margin: 20px 0;
+      }
+
+      #projectDisplay {
+        display: none;
+      }
+
+      #applicationsSection {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+      }
+
+      /* Simple grid for role display */
+      #teamRoles {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        body {
+          padding: 15px;
+        }
+
+        .form-section {
+          padding: 20px;
+        }
+
+        #teamRoles {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- PROJECT CREATION FORM -->
+    <div class="form-section" id="projectCreation">
+      <h2>Create New Project</h2>
+      <form id="projectForm">
+        <label for="projectName">Project Name:</label>
+        <input type="text" id="projectName" required />
+
+        <label for="projectDesc">Description:</label>
+        <textarea id="projectDesc" rows="4" required></textarea>
+
+        <label for="memberCount">Add Team Members Now?</label>
+        <select id="memberCount" onchange="showMemberFields()">
+          <option value="0">None (Open for applications later)</option>
+          <option value="1">1 Member</option>
+          <option value="2">2 Members</option>
+          <option value="3">3 Members</option>
+        </select>
+
+        <div id="memberFields"></div>
+
+        <button type="button" onclick="createProject()">Create Project</button>
+      </form>
+    </div>
+
+    <!-- PROJECT DISPLAY (After Creation) -->
+    <div class="form-section" id="projectDisplay" style="display: none">
+      <h2 id="displayProjectName"></h2>
+      <p id="displayProjectDesc"></p>
+
+      <h3>Team Roles</h3>
+      <div id="teamRoles">
+        <!-- Filled dynamically -->
+      </div>
+
+      <div id="applicationsSection">
+        <h3>Pending Applications</h3>
+        <div id="pendingApplications">
+          <!-- Filled dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- USER VIEW (Simulation) -->
+    <div class="form-section" id="userView">
+      <h2>User Perspective</h2>
+      <div id="availableProjects">
+        <!-- Projects will appear here -->
+      </div>
+
+      <div id="userApplicationForm" style="display: none">
+        <h3>Apply for Role</h3>
+        <select id="roleSelection"></select>
+        <button onclick="submitApplication()">Apply</button>
+      </div>
+
+      <div id="applicationStatus"></div>
+    </div>
+
+    <script>
+      // Global variables
+      let currentProject = null;
+      let users = [
+        { id: "user1", name: "Alice" },
+        { id: "user2", name: "Bob" },
+        { id: "user3", name: "Charlie" },
+      ];
+      let applications = [];
+
+      // Show member input fields based on selection
+      function showMemberFields() {
+        const count = parseInt(document.getElementById("memberCount").value);
+        let html = "";
+
+        for (let i = 0; i < count; i++) {
+          html += `
+                    <div class="role-box">
+                        <label>Member ${i + 1}:</label>
+                        <select id="member${i}_user">
+                            <option value="">Select User</option>
+                            ${users
+                              .map(
+                                (u) =>
+                                  `<option value="${u.id}">${u.name}</option>`
+                              )
+                              .join("")}
+                        </select>
+                        <label>Role:</label>
+                        <select id="member${i}_role">
+                            <option value="frontend">Frontend Developer</option>
+                            <option value="backend">Backend Developer</option>
+                            <option value="designer">UI Designer</option>
+                        </select>
+                    </div>
+                `;
+        }
+
+        document.getElementById("memberFields").innerHTML = html;
+      }
+
+      // Create project
+      function createProject() {
+        const name = document.getElementById("projectName").value;
+        const desc = document.getElementById("projectDesc").value;
+        const memberCount = parseInt(
+          document.getElementById("memberCount").value
+        );
+
+        // Collect members
+        const members = [];
+        for (let i = 0; i < memberCount; i++) {
+          const userId = document.getElementById(`member${i}_user`).value;
+          const role = document.getElementById(`member${i}_role`).value;
+          if (userId) {
+            members.push({ userId, role, status: "approved" });
+          } else {
+            // Open role
+            members.push({ userId: null, role, status: "open" });
+          }
+        }
+
+        // Create project object
+        currentProject = {
+          id: "proj_" + Math.random().toString(36).substr(2, 9),
+          name,
+          description: desc,
+          members,
+          owner: "current_user",
+        };
+
+        // Display the project
+        displayProject();
+        displayAvailableProjects();
+      }
+
+      // Display created project
+      function displayProject() {
+        document.getElementById("projectCreation").style.display = "none";
+        document.getElementById("projectDisplay").style.display = "block";
+
+        document.getElementById("displayProjectName").textContent =
+          currentProject.name;
+        document.getElementById("displayProjectDesc").textContent =
+          currentProject.description;
+
+        // Display team roles
+        let rolesHtml = "";
+        currentProject.members.forEach((member, index) => {
+          if (member.userId) {
+            rolesHtml += `
+                        <div class="role-box">
+                            <strong>${member.role}</strong>: 
+                            ${users.find((u) => u.id === member.userId).name}
+                            <span class="status-approved">(Approved)</span>
+                        </div>
+                    `;
+          } else {
+            rolesHtml += `
+                        <div class="role-box">
+                            <strong>${member.role}</strong>: 
+                            <span class="status-pending">(Open for applications)</span>
+                            <div id="applicantsForRole${index}"></div>
+                        </div>
+                    `;
+          }
+        });
+        document.getElementById("teamRoles").innerHTML = rolesHtml;
+      }
+
+      // Display projects available for application
+      function displayAvailableProjects() {
+        document.getElementById("availableProjects").innerHTML = `
+                <h3>Available Project: ${currentProject.name}</h3>
+                <p>${currentProject.description}</p>
+                <button onclick="showApplicationForm()">Apply to Join</button>
+            `;
+      }
+
+      // Show application form
+      function showApplicationForm() {
+        const openRoles = currentProject.members.filter((m) => !m.userId);
+        let options = openRoles
+          .map(
+            (role, index) => `<option value="${index}">${role.role}</option>`
+          )
+          .join("");
+
+        document.getElementById("roleSelection").innerHTML = options;
+        document.getElementById("userApplicationForm").style.display = "block";
+      }
+
+      // Submit application
+      function submitApplication() {
+        const roleIndex = document.getElementById("roleSelection").value;
+        const applicant = users[0]; // Simulating current user
+
+        applications.push({
+          projectId: currentProject.id,
+          roleIndex: parseInt(roleIndex),
+          userId: applicant.id,
+          userName: applicant.name,
+          status: "pending",
+        });
+
+        // Update UI
+        document.getElementById("applicationStatus").innerHTML = `
+                <p class="status-pending">Your application for 
+                ${currentProject.members[roleIndex].role} is pending approval</p>
+            `;
+
+        document.getElementById("userApplicationForm").style.display = "none";
+        updateApplicationsDisplay();
+      }
+
+      // Update applications display (owner view)
+      function updateApplicationsDisplay() {
+        let html = "";
+
+        currentProject.members.forEach((member, roleIndex) => {
+          if (!member.userId) {
+            const roleApps = applications.filter(
+              (app) =>
+                app.projectId === currentProject.id &&
+                app.roleIndex === roleIndex
+            );
+
+            if (roleApps.length > 0) {
+              html += `<h4>${member.role} Applicants:</h4>`;
+
+              roleApps.forEach((app) => {
+                html += `
+                                <div>
+                                    ${app.userName} 
+                                    <span class="status-${app.status}">(${
+                  app.status
+                })</span>
+                                    ${
+                                      app.status === "pending"
+                                        ? `<button onclick="approveApplication('${app.userId}', ${roleIndex})">
+                                            Approve
+                                        </button>`
+                                        : ""
+                                    }
+                                </div>
+                            `;
+              });
+            }
+          }
+        });
+
+        document.getElementById("pendingApplications").innerHTML = html;
+      }
+
+      // Approve application
+      function approveApplication(userId, roleIndex) {
+        // Update project members
+        currentProject.members[roleIndex].userId = userId;
+        currentProject.members[roleIndex].status = "approved";
+
+        // Update all applications for this role
+        applications.forEach((app) => {
+          if (
+            app.projectId === currentProject.id &&
+            app.roleIndex === roleIndex
+          ) {
+            app.status = app.userId === userId ? "approved" : "rejected";
+          }
+        });
+
+        // Update displays
+        displayProject();
+        updateApplicationsDisplay();
+
+        // In real implementation, would send notification to user here
+        console.log(
+          `Notification sent to user ${userId}: Your application was approved!`
+        );
+      }
+    </script>
+  </body>
+</html>

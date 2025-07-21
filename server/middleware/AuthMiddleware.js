@@ -1,4 +1,5 @@
 import Joi from "joi";
+import Team from '../models/Team.js';
 
 // Auth Validation
 const registerValidation = Joi.object({
@@ -89,4 +90,42 @@ export const requireAuth = (req, res, next) => {
     } catch (err) {
         return res.status(403).json({ msg: "Invalid Token" });
     }
+};
+
+// Team
+// Verify JWT token
+export const verifyJWT = (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) return res.status(401).json({ error: 'Unauthorized' });
+        req.user = decoded;
+        next();
+    });
+};
+
+// Check team ownership
+export const checkTeamOwnership = async (req, res, next) => {
+    const team = await Team.findOne({
+        _id: req.params.teamId,
+        'members.user': req.user._id,
+        'members.role': 'owner'
+    });
+
+    if (!team) return res.status(403).json({ error: 'Not an owner' });
+    req.team = team;
+    next();
+};
+
+// Check maintainer+ status
+export const checkTeamMaintainer = async (req, res, next) => {
+    const team = await Team.findOne({
+        _id: req.params.teamId,
+        'members.user': req.user._id,
+        'members.role': { $in: ['owner', 'maintainer'] }
+    });
+
+    if (!team) return res.status(403).json({ error: 'Insufficient permissions' });
+    req.team = team;
+    next();
 };

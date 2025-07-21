@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CreateIt Backend Tester</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      input,
+      button {
+        padding: 8px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      button {
+        background: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      .response {
+        margin-top: 20px;
+        padding: 10px;
+        background: #f5f5f5;
+      }
+      .tab {
+        display: none;
+      }
+      .active {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Backend Tester</h1>
+
+    <div>
+      <button onclick="showTab('signup')">Signup</button>
+      <button onclick="showTab('login')">Login</button>
+      <button onclick="showTab('google')">Google Auth</button>
+      <button onclick="showTab('otp')">OTP Flow</button>
+    </div>
+
+    <!-- Signup Form -->
+    <div id="signup" class="tab">
+      <h2>Signup</h2>
+      <div class="form-group">
+        <input type="text" id="fullName" placeholder="Full Name" />
+      </div>
+      <div class="form-group">
+        <input type="email" id="email" placeholder="Email" />
+      </div>
+      <div class="form-group">
+        <input type="text" id="phone" placeholder="Phone (10 digits)" />
+      </div>
+      <div class="form-group">
+        <input type="password" id="password" placeholder="Password" />
+      </div>
+      <button onclick="signup()">Sign Up</button>
+      <div id="signupResponse" class="response"></div>
+    </div>
+
+    <!-- Login Form -->
+    <div id="login" class="tab" style="display: none">
+      <h2>Login</h2>
+      <div class="form-group">
+        <input type="email" id="loginEmail" placeholder="Email" />
+      </div>
+      <div class="form-group">
+        <input type="password" id="loginPassword" placeholder="Password" />
+      </div>
+      <button onclick="login()">Log In</button>
+      <div id="loginResponse" class="response"></div>
+    </div>
+
+    <!-- Google Auth -->
+    <div id="google" class="tab" style="display: none">
+      <h2>Google Auth</h2>
+      <p>Test this by navigating to:</p>
+      <a href="http://localhost:8000/api/auth/google" target="_blank">
+        http://localhost:8000/api/auth/google
+      </a>
+      <p>After auth, you'll be redirected to:</p>
+      <code>http://localhost:5173/oauth-success?token=YOUR_TOKEN</code>
+    </div>
+
+    <!-- OTP Flow -->
+    <div id="otp" class="tab" style="display: none">
+      <h2>OTP Verification</h2>
+      <div class="form-group">
+        <input type="email" id="otpEmail" placeholder="Your Email" />
+      </div>
+      <button onclick="sendOTP()">Send OTP</button>
+      <div class="form-group">
+        <input type="text" id="otpCode" placeholder="6-digit OTP" />
+      </div>
+      <button onclick="verifyOTP()">Verify OTP</button>
+      <div id="otpResponse" class="response"></div>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:8000/api/auth";
+
+      function showTab(tabName) {
+        document.querySelectorAll(".tab").forEach((tab) => {
+          tab.style.display = "none";
+        });
+        document.getElementById(tabName).style.display = "block";
+      }
+
+      async function signup() {
+        const response = await fetch(`${API_BASE}/signup`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fullName: document.getElementById("fullName").value,
+            email: document.getElementById("email").value,
+            phone: document.getElementById("phone").value,
+            password: document.getElementById("password").value,
+          }),
+        });
+        const data = await response.json();
+        document.getElementById(
+          "signupResponse"
+        ).innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+      }
+
+      async function login() {
+        const response = await fetch(`${API_BASE}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: document.getElementById("loginEmail").value,
+            password: document.getElementById("loginPassword").value,
+          }),
+        });
+        const data = await response.json();
+        document.getElementById(
+          "loginResponse"
+        ).innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+        if (data.token) {
+          localStorage.setItem("token", data.token);
+        }
+      }
+
+      async function sendOTP() {
+        const response = await fetch(`${API_BASE}/send-otp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: document.getElementById("otpEmail").value,
+          }),
+        });
+        const data = await response.json();
+        document.getElementById(
+          "otpResponse"
+        ).innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+      }
+
+      async function verifyOTP() {
+        const response = await fetch(`${API_BASE}/verify-otp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: document.getElementById("otpEmail").value,
+            otp: document.getElementById("otpCode").value,
+          }),
+        });
+        const data = await response.json();
+        document.getElementById(
+          "otpResponse"
+        ).innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+      }
+    </script>
+  </body>
+</html>

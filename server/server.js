@@ -5,6 +5,7 @@ import colors from "colors"
 import dotenv from "dotenv"
 import AuthRoute from './routes/AuthRoute.js'
 import ProjectRoutes from './routes/ProjectRoutes.js'
+import TeamRoutes from './routes/TeamRoutes.js'
 import DBConnection from './config/db.js'
 dotenv.config()
 import passport from 'passport'
@@ -26,7 +27,7 @@ app.get("/api", (req, res) => {
 });
 app.use('/api/auth', AuthRoute);
 app.use('/api/projects', ProjectRoutes);
-
+app.use('/api/team', TeamRoutes)
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`.white.bgMagenta));

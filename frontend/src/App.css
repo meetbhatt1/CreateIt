@@ -1,4 +1,8 @@
 @import "tailwindcss";
+html,
+body {
+  font-family: "Fredoka";
+}
 
 .dashboard {
   max-width: 1200px;
@@ -49,5 +53,5 @@
 }
 
 .input {
-  @apply p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400;
+  @apply w-full p-4 border-3 mb-4 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105;
 }

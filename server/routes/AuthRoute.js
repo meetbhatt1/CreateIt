@@ -1,6 +1,6 @@
 import passport from "passport"
 import express from "express"
-import { LoginUser, SignUpUser } from "../controllers/AuthController.js"
+import { googleAuth, LoginUser, sendOTP, SignUpUser, verifyOTP } from "../controllers/AuthController.js"
 import { requireAuth, validateLogin, validateRegister } from "../middleware/AuthMiddleware.js"
 import "../config/passport.js"
 
@@ -13,16 +13,11 @@ router.post('/login', validateLogin, LoginUser)
 router.get('/google', passport.authenticate('google', {
     scope: ['profile', 'email']
 }));
+// Add these routes:
+router.post('/send-otp', sendOTP);
+router.post('/verify-otp', verifyOTP);
 
-router.get('/google/callback', passport.authenticate('google', { session: false }), (req, res) => {
-    const token = jwt.sign(
-        { id: req.user._id, email: req.user.email },
-        process.env.JWT_SECRET,
-        { expiresIn: '7d' }
-    );
-
-    res.redirect(`http://localhost:5173/oauth-success?token=${token}`);
-});
-
+// Modify Google callback to handle new users:
+router.get('/google/callback', passport.authenticate('google', { session: false }), googleAuth);
 
 export default router

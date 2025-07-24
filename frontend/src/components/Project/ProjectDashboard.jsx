@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import API from "../../utils/API";
 
 export default function ProjectsDashboard() {
   const [projects, setProjects] = useState([]);
@@ -23,22 +24,26 @@ export default function ProjectsDashboard() {
     ],
   };
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const res = await axios.get("http://localhost:8000/api/projects/all");
-        console.log(res?.data);
-        if (res.data.projects.length === 0) {
-          // Inject dummy project for display
-          setProjects([fakeProject]);
-        } else {
-          setProjects(res.data.projects);
-        }
-      } catch (err) {
-        setError("Failed to load projects");
+  const fetchMyProjects = async () => {
+    try {
+      const userId = await localStorage.getItem("userId");
+      // const res = await axios.get(`${API}/projects/my-projects/${userId}`);
+      const res = await axios.get(
+        `http://localhost:8000/api/projects/my-projects/${userId}`
+      );
+      console.log(res?.data);
+      if (res.data.projects.length === 0) {
+        setProjects([fakeProject]);
+      } else {
+        setProjects(res.data.projects);
       }
-    };
-    fetchProjects();
+    } catch (err) {
+      setError("Failed to load projects");
+    }
+  };
+
+  useEffect(() => {
+    fetchMyProjects();
   }, []);
 
   const handleDelete = async (projectId) => {
@@ -58,7 +63,7 @@ export default function ProjectsDashboard() {
       <h1 className="text-3xl font-bold text-center mb-6">My Projects</h1>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6 max-w-xl mx-auto">
+        <div className="text-red-400 text-center mt-50 align-middle font-extrabold text-3xl">
           {error}
         </div>
       )}

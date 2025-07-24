@@ -1,8 +1,20 @@
 import React, { useState } from "react";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { logout } from "../../redux/AuthSlice";
 
 export const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const userName = localStorage.getItem("user");
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    dispatch(logout()); // Clear Redux state
+    localStorage.removeItem("token"); // Remove token
+    localStorage.removeItem("user"); // Remove user data
+    navigate("/auth");
+  };
 
   return (
     <header className="col-span-full bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-[25px] shadow-[0_8px_25px_rgba(102,126,234,0.4)] flex justify-between items-center px-8 relative z-[1000] -rotate-[1deg] mb-2">
@@ -27,7 +39,10 @@ export const Navbar = () => {
           <div className="py-2 cursor-pointer transition-all duration-300 rounded-[10px] pl-2  hover:text-indigo-400 hover:bg-gray-100 hover:translate-x-1.5">
             ⚙️ Settings
           </div>
-          <div className="py-2 cursor-pointer transition-all duration-300 rounded-[10px] pl-2  hover:text-indigo-400 hover:bg-gray-100 hover:translate-x-1.5">
+          <div
+            onClick={handleLogout}
+            className="py-2 cursor-pointer transition-all duration-300 rounded-[10px] pl-2  hover:text-indigo-400 hover:bg-gray-100 hover:translate-x-1.5"
+          >
             👋 Logout
           </div>
         </div>

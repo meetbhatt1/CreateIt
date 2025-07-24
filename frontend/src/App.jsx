@@ -6,7 +6,6 @@ import { RightSidebar } from "./components/layout/RightSideBar";
 import { HomePage } from "./Pages/Homepage";
 import AuthPage from "./Pages/AuthPage";
 import ProjectsDashboard from "./components/Project/ProjectDashboard";
-import { ProjectCard } from "./components/ui/ProjectCard";
 import AddProject from "./components/Project/AddProject";
 import {
   BrowserRouter as Router,
@@ -15,9 +14,11 @@ import {
   Navigate,
 } from "react-router-dom";
 import ProjectPage from "./Pages/ProjectPage";
+import { UnderProgress } from "./Pages/UnderProgress";
 
 const App = () => {
   const user = localStorage.getItem("user");
+  console.log("USER__)))))))", user);
   const isLoggedIn = user && user.length > 0;
 
   return (
@@ -29,8 +30,8 @@ const App = () => {
             <LeftSidebar />
           </div>
           <div>
-            <ProjectPage />
-            {/* <Routes>
+            {/* <ProjectPage /> */}
+            <Routes>
               <Route
                 path="/"
                 element={isLoggedIn ? <HomePage /> : <Navigate to="/auth" />}
@@ -44,12 +45,22 @@ const App = () => {
                 element={isLoggedIn ? <AddProject /> : <Navigate to="/auth" />}
               />
               <Route
-                path="/projects-dashboard"
+                path="/project_dashboard"
                 element={
                   isLoggedIn ? <ProjectsDashboard /> : <Navigate to="/auth" />
                 }
               />
-            </Routes> */}
+              <Route
+                path="/under_progress"
+                element={
+                  isLoggedIn ? <UnderProgress /> : <Navigate to="/auth" />
+                }
+              />
+              <Route
+                path="/team_project"
+                element={isLoggedIn ? <ProjectPage /> : <Navigate to="/auth" />}
+              />
+            </Routes>
           </div>
           <div className="hidden xl:block">
             <RightSidebar />

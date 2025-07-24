@@ -2,7 +2,8 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import API from '../utils/API';
 
-const API_BASE_URL = `${API}/auth`;
+// const API_BASE_URL = `${API}/auth`;
+const API_BASE_URL = `http://localhost:8000/api/auth`
 
 // Existing login action
 export const loginUser = createAsyncThunk(
@@ -12,6 +13,7 @@ export const loginUser = createAsyncThunk(
             const response = await axios.post(`${API_BASE_URL}/login`, userData);
             localStorage.setItem('token', response.data.token);
             localStorage.setItem('user', response.data.user.fullName);
+            localStorage.setItem('userId', response.data.user._id);
             console.log(response?.data);
             return response?.data?.message;
         } catch (error) {
@@ -25,11 +27,14 @@ export const signupUser = createAsyncThunk(
     'auth/signupUser',
     async (userData, { rejectWithValue }) => {
         try {
-            console.log(userData);
-            const response = await axios.post(`${API_BASE_URL}/signup`, userData);
+            const payload = { ...userData };
+            delete payload.confirmPassword;
+            console.log(payload);
+            const response = await axios.post(`${API_BASE_URL}/signup`, payload);
             localStorage.setItem('user', response.data.user.fullName);
+            localStorage.setItem('userId', response.data.user._id);
             console.log("response------>", response?.data);
-            return response.data;
+            return response?.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Signup failed');
         }
@@ -57,7 +62,7 @@ export const resendOTP = createAsyncThunk(
     'auth/resendOTP',
     async ({ email }, { rejectWithValue }) => {
         try {
-            const response = await axios.post(`${API_BASE_URL}/resend-otp`, { email });
+            const response = await axios.post(`${API_BASE_URL}/send-otp`, { email });
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to resend OTP');

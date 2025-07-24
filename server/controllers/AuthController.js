@@ -1,5 +1,7 @@
 import User from '../models/userModel.js';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import sendEmail from '../utils/sendEmail.js';
 
 
 export const SignUpUser = async (req, res) => {
@@ -66,9 +68,16 @@ export const LoginUser = async (req, res) => {
             });
         }
 
-        // 3. Return success msg!!
+        // 3. JWT TOKEN
+        const token = jwt.sign(
+            { _id: user._id, email: user.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
         res.status(200).json({
             message: "🛸 “Login successful! Beam us up, dev!”",
+            token,
             user: {
                 fullName: user.fullName,
                 email: user.email,
@@ -87,16 +96,14 @@ export const sendOTP = async (req, res) => {
     const { email } = req.body;
     const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
 
-    // Save OTP to DB with expiry (add to User model)
     await User.findOneAndUpdate(
         { email },
         { otp, otpExpiry: Date.now() + 15 * 60 * 1000 } // 15 mins expiry
     );
 
-    // Send email (implement this service)
     await sendEmail({
         to: email,
-        subject: 'Your CreateIt Verification Code',
+        subject: 'Your CreateIt Verification Code🤫\n Verify before 15 minutes',
         text: `Your OTP is ${otp}`
     });
 
@@ -111,7 +118,6 @@ export const verifyOTP = async (req, res) => {
         return res.status(400).json({ message: "Invalid/expired OTP" });
     }
 
-    // Mark user as verified
     user.isVerified = true;
     user.otp = undefined;
     user.otpExpiry = undefined;

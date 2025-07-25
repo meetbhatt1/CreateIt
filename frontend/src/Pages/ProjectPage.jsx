@@ -9,6 +9,7 @@ import {
 } from "../components/ui/UI_Components";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import API from "../utils/API";
 
 const ProjectPage = () => {
   const navigate = useNavigate();
@@ -210,16 +211,12 @@ const ProjectPage = () => {
         members,
       };
 
-      const response = await axios.post(
-        "http://localhost:8000/api/team/team",
-        teamData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await axios.post(`${API}/team/team`, teamData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       if (response?.status == "201") {
         console.log("Team created:", response.data);

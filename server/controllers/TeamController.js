@@ -43,6 +43,7 @@ import Team from '../models/Team.js';
 import Invite from '../models/Invite.js';
 import User from '../models/userModel.js';
 import crypto from 'crypto';
+import mongoose from 'mongoose';
 
 // Helper function to generate token
 const generateToken = () => crypto.randomBytes(32).toString('hex');
@@ -122,6 +123,25 @@ export const createTeam = async (req, res) => {
         res.status(201).json({ message: "Team Created SuccessFully", team });
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+};
+
+export const getTeamsByUser = async (req, res) => {
+    try {
+        const userId = req?.user?._id;
+        const teams = await Team.find({
+            $or: [
+                { "owner": userId }, // User is owner
+                { "members.user": userId } // User is member
+            ]
+        })
+            .populate('owner', 'fullName email profileImage')
+            .populate('members.user', 'fullName email profileImage')
+            .sort({ createdAt: -1 });
+
+        res.status(201).json(teams);
+    } catch (error) {
+        res.status(500).json({ message: error });
     }
 };
 

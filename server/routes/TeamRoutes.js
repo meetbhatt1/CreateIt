@@ -4,7 +4,8 @@ import {
     getTeamDetails,
     inviteUser,
     acceptInvite,
-    joinPublicTeam
+    joinPublicTeam,
+    getTeamsByUser
 } from '../controllers/TeamController.js';
 import { auth } from '../middleware/AuthMiddleware.js';
 
@@ -20,5 +21,7 @@ router.post('/:teamId/invite', auth, inviteUser);
 router.post('/invite/accept/:token', auth, acceptInvite);
 // Join a public team
 router.post('/:teamId/join', auth, joinPublicTeam);
+// Get team by user
+router.get('/user', auth, getTeamsByUser);
 
 export default router;

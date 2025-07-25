@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 
-export const SidebarMenuItem = ({ href, children, isActive = false }) => {
+export const SidebarMenuItem = ({ onClick, children, isActive = false }) => {
   return (
     <li className="mb-4 px-4">
-      <a
-        href={href}
+      <button
+        onClick={onClick}
         className={`block p-4 rounded-2xl font-medium transition-all duration-300 relative
           ${
             isActive
@@ -14,7 +14,7 @@ export const SidebarMenuItem = ({ href, children, isActive = false }) => {
         `}
       >
         {children}
-      </a>
+      </button>
     </li>
   );
 };

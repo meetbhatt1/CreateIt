@@ -34,7 +34,7 @@ const userSchema = new mongoose.Schema({
     currentSemester: Number,
 
     // Profiling Details
-    preferredLanguage: String,
+    preferredLanguage: [String],
     pastProjects: [String],
     purpose: {
         type: String,

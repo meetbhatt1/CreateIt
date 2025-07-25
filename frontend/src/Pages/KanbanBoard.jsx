@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const KanbanBoard = () => {
+export const KanbanBoard = () => {
   const [columns, setColumns] = useState({
     todo: [
       { id: "1", title: "Task 1" },

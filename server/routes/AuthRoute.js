@@ -6,8 +6,8 @@ import "../config/passport.js"
 
 const router = express.Router()
 
-router.post('/signup', validateRegister, SignUpUser)
-router.post('/login', validateLogin, LoginUser)
+router.post('/signup', SignUpUser)
+router.post('/login', LoginUser)
 
 // Google
 router.get('/google', passport.authenticate('google', {

@@ -15,6 +15,8 @@ import {
 } from "react-router-dom";
 import ProjectPage from "./Pages/ProjectPage";
 import { UnderProgress } from "./Pages/UnderProgress";
+import { MyTeam } from "./components/Team/MyTeam";
+import KanbanBoard from "./Pages/KanbanBoard";
 
 const App = () => {
   const user = localStorage.getItem("user");
@@ -45,20 +47,28 @@ const App = () => {
                 element={isLoggedIn ? <AddProject /> : <Navigate to="/auth" />}
               />
               <Route
-                path="/project_dashboard"
+                path="/project-dashboard"
                 element={
                   isLoggedIn ? <ProjectsDashboard /> : <Navigate to="/auth" />
                 }
               />
               <Route
-                path="/under_progress"
+                path="/under-progress"
                 element={
                   isLoggedIn ? <UnderProgress /> : <Navigate to="/auth" />
                 }
               />
               <Route
-                path="/team_project"
+                path="/team-project"
                 element={isLoggedIn ? <ProjectPage /> : <Navigate to="/auth" />}
+              />
+              <Route
+                path="/my-team"
+                element={isLoggedIn ? <MyTeam /> : <Navigate to="/auth" />}
+              />
+              <Route
+                path="/kanban-board"
+                element={isLoggedIn ? <KanbanBoard /> : <Navigate to="/auth" />}
               />
             </Routes>
           </div>
@@ -68,6 +78,7 @@ const App = () => {
         </div>
       </div>
     </Router>
+    // <KanbanBoard />
   );
 };
 

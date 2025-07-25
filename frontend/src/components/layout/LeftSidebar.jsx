@@ -1,5 +1,5 @@
 import React from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Card } from "../ui/Card";
 import { SidebarMenuItem } from "../sidebar/SidebarMenuItem";
 
@@ -9,12 +9,13 @@ export const LeftSidebar = () => {
 
   const menuItems = [
     { href: "/", label: "🏠 Home" },
-    { href: "/under_progress", label: "👥 Your Squad" },
-    { href: "/team_project", label: "💻 Project Crew" },
-    { href: "/project_dashboard", label: "⭐ Your Contributions" },
-    { href: "/under_progress", label: "📝 Your Requests" },
-    { href: "/under_progress", label: "🎯 Mock Interviews" },
+    { href: "/my-team", label: "👥 Your Squad" },
+    { href: "/team-project", label: "💻 Project Crew" },
+    { href: "/project-dashboard", label: "⭐Your Contributions" },
+    { href: "/under-progress", label: "📝 Your Requests" },
+    { href: "/under-progress", label: "🎯 Mock Interviews" },
   ];
+  const navigate = useNavigate();
 
   return (
     <Card className="p-8 rotate-1" rotation="rotate-1" hoverRotation="rotate-1">
@@ -22,7 +23,7 @@ export const LeftSidebar = () => {
         {menuItems.map((item, index) => (
           <SidebarMenuItem
             key={`${item.href}-${index}`}
-            href={item.href}
+            onClick={() => navigate(item.href)}
             isActive={
               item.href === "/"
                 ? currentPath === "/"

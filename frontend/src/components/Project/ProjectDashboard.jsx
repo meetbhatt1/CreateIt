@@ -28,9 +28,7 @@ export default function ProjectsDashboard() {
     try {
       const userId = await localStorage.getItem("userId");
       // const res = await axios.get(`${API}/projects/my-projects/${userId}`);
-      const res = await axios.get(
-        `http://localhost:8000/api/projects/my-projects/${userId}`
-      );
+      const res = await axios.get(`${API}/projects/my-projects/${userId}`);
       console.log(res?.data);
       if (res.data.projects.length === 0) {
         setProjects([fakeProject]);

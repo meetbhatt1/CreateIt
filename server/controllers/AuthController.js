@@ -123,7 +123,22 @@ export const verifyOTP = async (req, res) => {
     user.otpExpiry = undefined;
     await user.save();
 
-    res.status(200).json({ message: "Email verified successfully!" });
+    // ✅ Generate JWT token
+    const token = jwt.sign(
+        { _id: user._id, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+    );
+
+    res.status(200).json({
+        message: "Email verified successfully!",
+        token,
+        user: {
+            _id: user._id,
+            fullName: user.fullName,
+            email: user.email
+        }
+    });
 };
 
 export const googleAuth = async (req, res) => {

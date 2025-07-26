@@ -5,6 +5,7 @@ import { InterviewSection } from "../components/question/InterviewSection";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import API from "../utils/API";
+import { Button } from "../components/ui/UI_Components";
 
 export const HomePage = () => {
   const [projects, setProjects] = useState([]);
@@ -21,12 +22,9 @@ export const HomePage = () => {
 
   return (
     <main className="p-4 overflow-y-auto -rotate-1">
-      <button
-        onClick={() => navigate("/add-project")}
-        className="mb-4 bg-indigo-500 text-white px-4 py-2 rounded"
-      >
+      <Button className="mb-4" onClick={() => navigate("/add-project")}>
         Add Project
-      </button>
+      </Button>
       <TopContributors />
       <LanguageSection
         title="🐍 Python Playground"

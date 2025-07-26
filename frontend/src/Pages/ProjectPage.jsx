@@ -10,6 +10,7 @@ import {
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import API from "../utils/API";
+import { ArrowLeft } from "lucide-react";
 
 const ProjectPage = () => {
   const navigate = useNavigate();
@@ -40,6 +41,8 @@ const ProjectPage = () => {
   });
   const [languageOptions] = useState([
     { value: "js", label: "JavaScript" },
+    { value: "react", label: "ReactJs" },
+    { value: "node", label: "NodeJs" },
     { value: "ts", label: "TypeScript" },
     { value: "py", label: "Python" },
     { value: "java", label: "Java" },
@@ -231,59 +234,69 @@ const ProjectPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-purple-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md relative overflow-hidden">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-black text-purple-600 mb-2">
-            💪 Create Team Project
-          </h1>
-        </div>
-        <div className="m-1 flex-col">
-          <Input
-            type="text"
-            placeholder="Enter your projectname"
-            required
-            value={projectName}
-            onChange={(e) => setProjectName(e.target.value)}
-            error={errors.projectName}
-          />
-          <Input
-            type="textarea"
-            name="projectDescription"
-            placeholder="Enter Description"
-            required
-            value={projectDescription}
-            onChange={(e) => setProjectDescription(e.target.value)}
-            error={errors.projectDescription}
-          />
-          <RadioGroup
-            name="Visibility"
-            label="Select Visibility"
-            orientation="horizontal"
-            selectedValue={projectVisibility}
-            onChange={(e) => setProjectVisibility(e.target.value)}
-            options={[
-              { value: "1", label: "Public" },
-              { value: "0", label: "Private" },
-            ]}
-            error={errors.projectVisibility}
-          />
-          <Dropdown
-            value={memberCount}
-            onChange={(e) => setMemberCount(e.target.value)}
-            options={[
-              { value: "0", label: "Select No. Of Members" },
-              { value: "1", label: "Yourself" },
-              { value: "2", label: "2 Members" },
-              { value: "3", label: "3 Members" },
-              { value: "4", label: "4 Members" },
-            ]}
-            error={errors.memberCount}
-          />
-          {memberCount > 0 && memberBox()}
-          <Button onClick={submitForm} variant="primary">
-            <p>Submit</p>
-          </Button>
+    <div className="min-h-screen bg-purple-50">
+      <Button
+        variant="secondary"
+        className="btn-primary flex items-center m-2 text-white transition-all"
+        onClick={() => navigate("/my-team")}
+      >
+        <ArrowLeft className="w-5 h-5 mr-1" />
+        Go Back
+      </Button>
+      <div className="flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md relative overflow-hidden">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-black text-purple-600 mb-2">
+              💪 Create Team Project
+            </h1>
+          </div>
+          <div className="m-1 flex-col">
+            <Input
+              type="text"
+              placeholder="Enter your projectname"
+              required
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              error={errors.projectName}
+            />
+            <Input
+              type="textarea"
+              name="projectDescription"
+              placeholder="Enter Description"
+              required
+              value={projectDescription}
+              onChange={(e) => setProjectDescription(e.target.value)}
+              error={errors.projectDescription}
+            />
+            <RadioGroup
+              name="Visibility"
+              label="Select Visibility"
+              orientation="horizontal"
+              selectedValue={projectVisibility}
+              onChange={(e) => setProjectVisibility(e.target.value)}
+              options={[
+                { value: "1", label: "Public" },
+                { value: "0", label: "Private" },
+              ]}
+              error={errors.projectVisibility}
+            />
+            <Dropdown
+              value={memberCount}
+              onChange={(e) => setMemberCount(e.target.value)}
+              options={[
+                { value: "0", label: "Select No. Of Members" },
+                { value: "1", label: "Yourself" },
+                { value: "2", label: "2 Members" },
+                { value: "3", label: "3 Members" },
+                { value: "4", label: "4 Members" },
+              ]}
+              error={errors.memberCount}
+            />
+            {memberCount > 0 && memberBox()}
+            <Button onClick={submitForm} variant="primary">
+              <p>Submit</p>
+            </Button>
+          </div>
         </div>
       </div>
     </div>

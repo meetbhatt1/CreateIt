@@ -1,60 +1,34 @@
 import { useEffect, useState } from "react";
 import { Button } from "../ui/UI_Components";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export const MyTeam = () => {
+  const navigate = useNavigate();
+
+  const user = JSON.parse(localStorage.getItem("user"));
+  console.log("USERID: ", user._id);
+
+  const [teams, setTeams] = useState([]);
+
   const fetchUserProjects = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/api/team/user", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "application/json",
-        },
-      });
-      console.log(response?.data);
+      const response = await axios.get(
+        `http://localhost:8000/api/team/user/${user._id}`
+      );
+      if (response?.status == 200) {
+        setTeams(response?.data);
+      }
     } catch (error) {
       console.log("Error Fetching Project : ", error);
     }
   };
   useEffect(() => {
     fetchUserProjects();
-  });
-
-  const [teams] = useState([
-    {
-      id: 1,
-      name: "Design Team",
-      description:
-        "Working on product redesign for Q4 release. Collaboration between UX and UI designers.",
-      visibility: "private",
-      role: "Owner",
-      memberCount: 8,
-      members: Array(3).fill(""),
-    },
-    {
-      id: 2,
-      name: "Marketing Team",
-      description:
-        "Planning and executing marketing campaigns across all channels for product launches.",
-      visibility: "public",
-      role: "Member",
-      memberCount: 12,
-      members: Array(3).fill(""),
-    },
-    {
-      id: 3,
-      name: "Engineering Team",
-      description:
-        "Building and maintaining core product features with agile development methodology.",
-      visibility: "private",
-      role: "Owner",
-      memberCount: 4,
-      members: Array(4).fill(""),
-    },
-  ]);
+  }, []);
 
   return (
-    <div className="container bg-gray-100 mx-auto px-4 py-8 max-w-6xl">
+    <div className=" mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
           My Teams
@@ -62,6 +36,7 @@ export const MyTeam = () => {
         <Button
           variant="secondary"
           className="btn-primary flex items-center px-4 py-2 text-white transition-all"
+          onClick={() => navigate("/team-project")}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -79,7 +54,7 @@ export const MyTeam = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {teams.map((team) => (
           <div
             key={team.id}
@@ -87,7 +62,7 @@ export const MyTeam = () => {
           >
             <div className="p-5 border-b border-gray-100 flex justify-between items-center">
               <h3 className="font-bold text-lg text-gray-800 truncate">
-                {team.name}
+                {team.title}
               </h3>
               <span
                 className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
@@ -101,7 +76,16 @@ export const MyTeam = () => {
             </div>
 
             <div className="p-5">
-              <p className="text-gray-600 mb-4">{team.description}</p>
+              <p
+                className="text-gray-600 mb-4 overflow-hidden text-ellipsis whitespace-normal"
+                style={{
+                  display: "-webkit-box",
+                  WebkitLineClamp: 5,
+                  WebkitBoxOrient: "vertical",
+                }}
+              >
+                {team.description}
+              </p>
 
               <div className="flex items-center mb-4">
                 <span

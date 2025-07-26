@@ -20,7 +20,7 @@ import KanbanBoard from "./Pages/KanbanBoard";
 
 const App = () => {
   const user = localStorage.getItem("user");
-  console.log("USER__)))))))", user);
+  console.log("USER__", user);
   const isLoggedIn = user && user.length > 0;
 
   return (

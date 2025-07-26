@@ -22,33 +22,16 @@ export const loginUser = createAsyncThunk(
     }
 );
 
-// Updated signup action (sends OTP instead of direct signup)
-export const signupUser = createAsyncThunk(
-    'auth/signupUser',
-    async (userData, { rejectWithValue }) => {
-        try {
-            const payload = { ...userData };
-            delete payload.confirmPassword;
-            console.log(payload);
-            const response = await axios.post(`${API_BASE_URL}/signup`, payload);
-            localStorage.setItem('user', response.data.user.fullName);
-            localStorage.setItem('userId', response.data.user._id);
-            console.log("response------>", response?.data);
-            return response?.data;
-        } catch (error) {
-            return rejectWithValue(error.response?.data?.message || 'Signup failed');
-        }
-    }
-);
-
 // New OTP verification action
 export const verifyOTP = createAsyncThunk(
     'auth/verifyOTP',
     async ({ email, otp }, { rejectWithValue }) => {
         try {
             const response = await axios.post(`${API_BASE_URL}/verify-otp`, { email, otp });
-            if (response.data.token) {
-                localStorage.setItem('token', response.data.token);
+            if (response.data) {
+                console.log(response?.data);
+                localStorage.setItem('token', response?.data?.token);
+                localStorage.setItem('user', JSON.stringify(response?.data?.user));
             }
             return response.data;
         } catch (error) {
@@ -167,22 +150,6 @@ const authSlice = createSlice({
                 state.isLoading = false;
                 state.error = action.payload;
                 state.isAuthenticated = false;
-            })
-
-            // Signup cases (now sends OTP)
-            .addCase(signupUser.pending, (state) => {
-                state.isLoading = true;
-                state.error = null;
-            })
-            .addCase(signupUser.fulfilled, (state) => {
-                state.isLoading = false;
-                state.otpSent = true;
-                state.error = null;
-            })
-            .addCase(signupUser.rejected, (state, action) => {
-                state.isLoading = false;
-                state.error = action.payload;
-                state.otpSent = false;
             })
 
             // OTP verification cases

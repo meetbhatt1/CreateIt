@@ -10,7 +10,7 @@ export const LeftSidebar = () => {
   const menuItems = [
     { href: "/", label: "🏠 Home" },
     { href: "/my-team", label: "👥 Your Squad" },
-    { href: "/team-project", label: "💻 Project Crew" },
+    { href: "/under-progress", label: "💻 Project Crew" },
     { href: "/project-dashboard", label: "⭐Your Contributions" },
     { href: "/under-progress", label: "📝 Your Requests" },
     { href: "/under-progress", label: "🎯 Mock Interviews" },

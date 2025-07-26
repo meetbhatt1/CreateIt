@@ -128,22 +128,50 @@ export const createTeam = async (req, res) => {
 
 export const getTeamsByUser = async (req, res) => {
     try {
-        const userId = req?.user?._id;
-        const teams = await Team.find({
-            $or: [
-                { "owner": userId }, // User is owner
-                { "members.user": userId } // User is member
-            ]
-        })
-            .populate('owner', 'fullName email profileImage')
-            .populate('members.user', 'fullName email profileImage')
-            .sort({ createdAt: -1 });
+        const userId = new mongoose.Types.ObjectId(req.params.id);
 
-        res.status(201).json(teams);
+        const teams = await Team.aggregate([
+            {
+                $match: {
+                    $or: [
+                        { owner: userId },
+                        { "members.user": userId }
+                    ]
+                }
+            },
+            {
+                $lookup: {
+                    from: "users", // collection name in MongoDB (should be lowercase plural of your model name)
+                    localField: "owner",
+                    foreignField: "_id",
+                    as: "owner"
+                }
+            },
+            {
+                $unwind: "$owner"
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "members.user",
+                    foreignField: "_id",
+                    as: "memberDetails"
+                }
+            },
+            {
+                $sort: {
+                    createdAt: -1
+                }
+            }
+        ]);
+
+        res.status(200).json(teams);
     } catch (error) {
-        res.status(500).json({ message: error });
+        console.error("Error in getTeamsByUser (aggregate):", error);
+        res.status(500).json({ message: "Server error", error });
     }
 };
+
 
 export const getTeamDetails = async (req, res) => {
     try {

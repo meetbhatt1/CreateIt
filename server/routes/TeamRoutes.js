@@ -22,6 +22,6 @@ router.post('/invite/accept/:token', auth, acceptInvite);
 // Join a public team
 router.post('/:teamId/join', auth, joinPublicTeam);
 // Get team by user
-router.get('/user', auth, getTeamsByUser);
+router.get('/user/:id', getTeamsByUser);
 
 export default router;

@@ -5,7 +5,8 @@ import { logout } from "../../redux/AuthSlice";
 
 export const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const userName = localStorage.getItem("user");
+  const user = JSON.parse(localStorage.getItem("user"));
+  const userName = user?.fullName;
   const dispatch = useDispatch();
   const navigate = useNavigate();
 

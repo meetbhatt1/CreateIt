@@ -1,6 +1,9 @@
 import React, { useState } from "react";
+import { Button } from "../ui/UI_Components";
+import { useNavigate } from "react-router-dom";
 
 export const KanbanBoard = () => {
+  const navigate = useNavigate();
   const [columns, setColumns] = useState({
     todo: [
       { id: "1", title: "Task 1" },
@@ -44,32 +47,36 @@ export const KanbanBoard = () => {
   };
 
   return (
-    <div style={styles.board}>
-      {Object.entries(columns).map(([columnName, tasks]) => (
-        <div
-          key={columnName}
-          style={styles.column}
-          onDragOver={handleDragOver}
-          onDrop={(e) => handleDrop(e, columnName)}
-        >
-          <h3 style={styles.columnHeader}>{columnName.toUpperCase()}</h3>
-          {tasks.map((task) => (
-            <div
-              key={task.id}
-              style={styles.card}
-              draggable
-              onDragStart={() => handleDragStart(task, columnName)}
-            >
-              {task.title}
-            </div>
-          ))}
-        </div>
-      ))}
+    <div className="flex-1 w-full min-h-screen">
+      <Button variant="secondary" onClick={() => navigate("/")}>
+        Back to Home
+      </Button>
+      <div style={styles.board}>
+        {Object.entries(columns).map(([columnName, tasks]) => (
+          <div
+            key={columnName}
+            style={styles.column}
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, columnName)}
+          >
+            <h3 style={styles.columnHeader}>{columnName.toUpperCase()}</h3>
+            {tasks.map((task) => (
+              <div
+                key={task.id}
+                style={styles.card}
+                draggable
+                onDragStart={() => handleDragStart(task, columnName)}
+              >
+                {task.title}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
 
-// Basic inline styles for simplicity
 const styles = {
   board: {
     display: "flex",
@@ -78,7 +85,7 @@ const styles = {
     justifyContent: "center",
   },
   column: {
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#dfdfdf",
     padding: "16px",
     borderRadius: "8px",
     width: "250px",

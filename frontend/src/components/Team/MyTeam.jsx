@@ -54,7 +54,10 @@ export const MyTeam = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div
+        onClick={() => navigate("/team-dashboard")}
+        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+      >
         {teams.map((team) => (
           <div
             key={team.id}

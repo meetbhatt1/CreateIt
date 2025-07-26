@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../../redux/AuthSlice";
 
-export const Navbar = () => {
+export const Navbar = ({ heading = "🚀 CreateIt" }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const user = JSON.parse(localStorage.getItem("user"));
   const userName = user?.fullName;
@@ -18,9 +18,9 @@ export const Navbar = () => {
   };
 
   return (
-    <header className="col-span-full bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-[25px] shadow-[0_8px_25px_rgba(102,126,234,0.4)] flex justify-between items-center px-8 relative z-[1000] -rotate-[1deg] mb-2">
+    <header className="col-span-full bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-[25px] shadow-[0_8px_25px_rgba(102,126,234,0.4)] flex justify-between items-center px-8 py-1.75 relative z-[1000] -rotate-[1deg] mb-2">
       <div className="font-fredoka text-[2.2rem] font-bold text-white [text-shadow:3px_3px_0px_rgba(0,0,0,0.2)] rotate-2">
-        🚀 CreateIt
+        {heading}
       </div>
       <div className="relative">
         <button

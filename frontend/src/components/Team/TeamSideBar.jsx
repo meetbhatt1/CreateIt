@@ -3,22 +3,25 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Card } from "../ui/Card";
 import { SidebarMenuItem } from "../sidebar/SidebarMenuItem";
 
-export const LeftSidebar = () => {
+export const TeamSideBar = () => {
   const location = useLocation();
   const currentPath = location.pathname;
 
   const menuItems = [
-    { href: "/", label: "🏠 Home" },
-    { href: "/my-team", label: "👥 Your Squad" },
-    { href: "/under-progress", label: "💻 Project Crew" },
-    { href: "/project-dashboard", label: "⭐Your Contributions" },
+    { href: "/team-dashboard", label: "DashBoard" },
+    { href: "/project-dashboard", label: "Projects" },
+    { href: "/kanban-board", label: "Tasks" },
+    { href: "/my-team", label: "My Teams" },
     { href: "/under-progress", label: "📝 Your Requests" },
-    { href: "/under-progress", label: "🎯 Mock Interviews" },
+    { href: "/", label: "Back To Home" },
   ];
   const navigate = useNavigate();
 
   return (
-    <Card className="p-6 rotate-1" rotation="rotate-1" hoverRotation="rotate-1">
+    <Card className="p-6" rotation="rotate-0" hoverRotation="rotate-1">
+      <p className="text-purple-500 my-2 font-bold justify-self-center text-2xl">
+        Team Management
+      </p>
       <ul className="space-y-0">
         {menuItems.map((item, index) => (
           <SidebarMenuItem

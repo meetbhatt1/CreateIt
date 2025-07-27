@@ -20,6 +20,10 @@ const ProjectPage = () => {
   const [memberCount, setMemberCount] = useState(0);
   const [customRoles, setCustomRoles] = useState({});
 
+  const user = JSON.parse(localStorage.getItem("user"));
+  const userId = user._id;
+  console.log("------------------>>>>>>>>>>>>>>>>", user._id);
+
   const [memberInfo, setMemberInfo] = useState([
     { id: 0, userId: null, role: "", language: [] },
   ]);
@@ -111,11 +115,7 @@ const ProjectPage = () => {
           <Input
             type="text"
             placeholder={`Member ${member.id} UserID (optional)`}
-            value={
-              member.id === 1
-                ? `${localStorage.getItem("userId")}`
-                : member.userId
-            }
+            value={member.id === 1 ? `${userId}` : member.userId}
             onChange={(e) =>
               handleMemberChange(member.id, "userId", e.target.value)
             }
@@ -200,37 +200,75 @@ const ProjectPage = () => {
     try {
       if (!validateForm()) return null;
 
-      // Create clean member data
-      const members = memberInfo.map((member) => ({
-        userId: member.userId || null,
-        role: member.role === "4" ? customRoles[member.id] || "" : member.role,
-        languages: Array.isArray(member.language) ? member.language : [],
-      }));
-
+      // Create team with only the creator as member
       const teamData = {
         title: projectName.trim(),
         description: projectDescription.trim(),
         visibility: projectVisibility,
-        members,
+        members: [
+          {
+            userId: localStorage.getItem("userId"),
+            role:
+              memberInfo[0].role === "4"
+                ? customRoles[memberInfo[0].id] || ""
+                : memberInfo[0].role,
+            languages: memberInfo[0].language,
+          },
+        ],
       };
 
-      const response = await axios.post(`${API}/team/team`, teamData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axios.post(
+        `http://localhost:8000/api/team/team`,
+        teamData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      if (response?.status == "201") {
-        console.log("Team created:", response.data);
+      if (response?.status === 201) {
+        console.log(response?.data);
+        const teamId = response?.data?.team?._id;
+        console.log(teamId);
+
+        // Send invitations to other members
+        const otherMembers = memberInfo.slice(1);
+        const responseInvite = await sendInvitations(teamId, otherMembers);
+        console.log(responseInvite);
+
         navigate("/");
       }
     } catch (error) {
-      console.error(
-        "Error creating team:",
-        error.response?.data || error.message
-      );
+      console.error("Error:", error.response?.data || error.message);
     }
+  };
+
+  const sendInvitations = async (teamId, members) => {
+    const invitationPromises = members.map((member) => {
+      if (!member.userId) return null;
+      console.log("Sender: ", userId);
+      const requestData = {
+        userId: member.userId,
+        role: member.role === "4" ? customRoles[member.id] || "" : member.role,
+        languages: member.language,
+        sender: userId,
+      };
+      console.log(requestData);
+      return axios.post(
+        `http://localhost:8000/api/team/${teamId}/invite`,
+        requestData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    });
+
+    await Promise.all(invitationPromises);
   };
 
   return (
@@ -246,7 +284,7 @@ const ProjectPage = () => {
       <div className="flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md relative overflow-hidden">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-black text-purple-600 mb-2">
+            <h1 className="text-3xl rotate-[1.75deg] font-black font-[fredoka] text-purple-700 mb-2">
               💪 Create Team Project
             </h1>
           </div>

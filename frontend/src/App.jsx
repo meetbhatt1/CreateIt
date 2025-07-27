@@ -20,6 +20,12 @@ import { MyTeam } from "./components/Team/MyTeam";
 import KanbanBoard from "./components/Team/KanbanBoard";
 import { TeamDashboard } from "./components/Team/TeamDashBoard";
 import { TeamSideBar } from "./components/Team/TeamSideBar";
+import InvitationsPage from "./Pages/InvitationsPage";
+import {
+  InviteNotification,
+  InviteRequest,
+} from "./components/Invite.jsx/InviteNotification";
+import MockInterview from "./Pages/MockInterview";
 const Layout = ({ children }) => {
   const location = useLocation();
 
@@ -28,6 +34,7 @@ const Layout = ({ children }) => {
     "/team-dashboard",
     "/project-dashboard",
     "/my-team",
+    "/invitations",
   ];
   const routesWithRightSidebar = ["/", "/add-project", "/under-progress"];
 
@@ -115,6 +122,14 @@ const App = () => {
           <Route
             path="/team-dashboard"
             element={isLoggedIn ? <TeamDashboard /> : <Navigate to="/auth" />}
+          />
+          <Route
+            path="/invitations"
+            element={isLoggedIn ? <InvitationsPage /> : <Navigate to="/auth" />}
+          />
+          <Route
+            path="/mock-interview"
+            element={isLoggedIn ? <MockInterview /> : <Navigate to="/auth" />}
           />
         </Routes>
       </Layout>

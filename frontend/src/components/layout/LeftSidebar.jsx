@@ -12,8 +12,7 @@ export const LeftSidebar = () => {
     { href: "/my-team", label: "👥 Your Squad" },
     { href: "/under-progress", label: "💻 Project Crew" },
     { href: "/project-dashboard", label: "⭐Your Contributions" },
-    { href: "/under-progress", label: "📝 Your Requests" },
-    { href: "/under-progress", label: "🎯 Mock Interviews" },
+    { href: "/mock-interview", label: "🎯 Mock Interviews" },
   ];
   const navigate = useNavigate();
 

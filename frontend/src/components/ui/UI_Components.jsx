@@ -275,3 +275,22 @@ export const MultiSelect = ({
     </div>
   );
 };
+
+// BADGE
+const badgeStyles = {
+  default:
+    "inline-flex items-center rounded-full border border-transparent bg-blue-600 text-white px-2.5 py-0.5 text-xs font-semibold transition-colors hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2",
+  secondary:
+    "inline-flex items-center rounded-full border border-transparent bg-gray-200 text-gray-900 px-2.5 py-0.5 text-xs font-semibold transition-colors hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2",
+  destructive:
+    "inline-flex items-center rounded-full border border-transparent bg-red-600 text-white px-2.5 py-0.5 text-xs font-semibold transition-colors hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2",
+  outline:
+    "inline-flex items-center rounded-full border border-current text-black px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2",
+};
+
+export const Badge = ({ className = "", variant = "default", ...props }) => {
+  const baseClass = badgeStyles[variant] || badgeStyles.default;
+  const combinedClass = `${baseClass} ${className}`;
+
+  return <div className={combinedClass} {...props} />;
+};

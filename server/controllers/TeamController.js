@@ -116,6 +116,7 @@ export const createTeam = async (req, res) => {
         // Create invites for existing users
         for (const inviteData of invites) {
             inviteData.team = team._id;
+            inviteData.sender = ownerId; // Add sender information
             await Invite.create(inviteData);
             // TODO: Send email notification with invite token
         }
@@ -191,7 +192,7 @@ export const getTeamDetails = async (req, res) => {
 
 export const inviteUser = async (req, res) => {
     try {
-        const { email, role, languages } = req.body;
+        const { userId, role, languages, sender } = req.body;
         const teamId = req.params.teamId;
 
         const team = await Team.findById(teamId);
@@ -206,14 +207,108 @@ export const inviteUser = async (req, res) => {
         const token = generateToken();
         const invite = await Invite.create({
             team: teamId,
-            email,
+            userId,
             role,
             languages,
+            sender,
             token
         });
 
         // TODO: Send email with invite link
         res.json({ inviteToken: token });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const respondToInvite = async (req, res) => {
+    try {
+        const { accepted } = req.body;
+        const inviteId = req.params.inviteId;
+        const userId = req.user._id;
+
+        const invite = await Invite.findById(inviteId);
+        if (!invite) {
+            return res.status(404).json({ message: 'Invite not found' });
+        }
+
+        // Verify the invite belongs to the current user
+        if (invite.userId.toString() !== userId.toString()) {
+            return res.status(403).json({ message: 'Unauthorized' });
+        }
+
+        const team = await Team.findById(invite.team);
+        if (!team) {
+            return res.status(404).json({ message: 'Team not found' });
+        }
+
+        if (accepted) {
+            // Add user to team members
+            const isAlreadyMember = team.members.some(m =>
+                m.user && m.user.toString() === userId.toString()
+            );
+
+            if (!isAlreadyMember) {
+                team.members.push({
+                    user: userId,
+                    role: invite.role,
+                    languages: invite.languages,
+                    status: 'accepted'
+                });
+                await team.save();
+            }
+        }
+
+        // Update invite status
+        invite.status = accepted ? 'accepted' : 'rejected';
+        await invite.save();
+
+        res.json({ status: invite.status });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+import { formatDistanceToNow } from 'date-fns'; // Add this import
+
+export const getUserInvitations = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        const pending = await Invite.find({
+            userId,
+            status: 'pending'
+        })
+            .populate('team', 'title') // Use 'title' instead of 'name'
+            .populate('sender', 'username'); // Populate sender
+
+        // Remove Notification references
+        const history = await Invite.find({
+            userId,
+            status: { $in: ['accepted', 'rejected'] }
+        })
+            .sort({ updatedAt: -1 })
+            .limit(10)
+            .populate('team', 'title')
+            .populate('sender', 'username');
+
+        res.json({
+            pending: pending.map(invite => ({
+                _id: invite._id,
+                teamId: invite.team._id,
+                teamName: invite.team.title,
+                senderName: invite.sender.username,
+                role: invite.role,
+                message: `Join ${invite.team.title} as ${invite.role}`,
+                createdAt: invite.createdAt
+            })),
+            history: history.map(invite => ({
+                _id: invite._id,
+                teamName: invite.team.title,
+                status: invite.status === 'accepted' ? 'Approved' : 'Rejected',
+                timestamp: formatDistanceToNow(invite.updatedAt, { addSuffix: true })
+            }))
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

@@ -2,52 +2,76 @@ import Joi from "joi";
 import User from '../models/userModel.js';
 import jwt from 'jsonwebtoken';
 
-// Auth Validation
+// Adjusted Validation Schema
 const registerValidation = Joi.object({
     fullName: Joi.string().min(3).required().messages({
         'string.empty': '😶 “Forgot to introduce yourself? Say your name!”',
         'string.min': '🧒 “Short names are cool, but 3+ letters, please!”',
     }),
+
     email: Joi.string().email().required().messages({
         'string.empty': '📩 “Email is a must — how else do we spam you?”',
         'string.email': '🧠 “That’s not an email. It’s a cry for help.”',
     }),
+
     phone: Joi.string().pattern(/^[6-9]\d{9}$/).required().messages({
         'string.pattern.base': '📞 Call me maybe? That number looks sus...',
+        'string.empty': '📞 Phone number is required',
     }),
+
     password: Joi.string().min(6).required().messages({
         'string.empty': '🛑 “No password? You brave?”',
         'string.min': '🧠 Password should be at least 6 characters!',
     }),
+
     dob: Joi.date().required().messages({
         'date.base': '🎂 “Time traveler? Give us a real birthday.”',
+        'any.required': '🎂 Birthday is required',
     }),
-    profileImage: Joi.string().optional().messages({
-        'string.empty': '😶 “Pick a face. Any face.”'
+
+    profileImage: Joi.string().allow('').optional().messages({
+        'string.base': '😶 “Pick a face. Any face.”',
     }),
-    collegeName: Joi.string().optional().messages({
-        'string.empty': '🏫 “Even Hogwarts had a name.”',
+
+    collegeName: Joi.string().allow('').optional().messages({
+        'string.base': '🏫 “Even Hogwarts had a name.”',
     }),
-    degreeName: Joi.string().optional().messages({
-        'string.empty': '🎓 “Tell us what you’re suffering through.”',
+
+    degreeName: Joi.string().allow('').optional().messages({
+        'string.base': '🎓 “Tell us what you’re suffering through.”',
     }),
+
     currentSemester: Joi.number().optional().messages({
         'number.base': '📚 “Enter your sem — or are you eternally in the 3rd?”',
     }),
-    preferredLanguage: Joi.string().optional().messages({
-        'string.empty': '💬 “JavaScript? Python? Atleast HTML?”'
+
+    preferredLanguage: Joi.array().items(Joi.string()).optional().messages({
+        'array.base': '💬 “Languages should be a list — not just love for JS.”',
     }),
+
     pastProjects: Joi.array().items(Joi.string()).optional().messages({
         'array.base': '🧠 “Projects go in a list, not a sentence.”',
     }),
-    purpose: Joi.string().valid('contributor', 'mock-interview', 'opensource-consumer', 'other').optional(),
-    github: Joi.string().uri().optional(),
-    linkedin: Joi.string().uri().optional()
+
+    purpose: Joi.string()
+        .valid('contributor', 'mock-interview', 'opensource-consumer', 'other')
+        .optional(),
+
+    github: Joi.string().uri().allow('').optional().messages({
+        'string.uri': '🐙 GitHub should be a valid link!',
+    }),
+
+    linkedin: Joi.string().uri().allow('').optional().messages({
+        'string.uri': '🔗 LinkedIn should be a valid link!',
+    }),
 });
 
-// Register Middleware
+// Middleware
 export const validateRegister = (req, res, next) => {
-    const { error } = registerValidation.validate(req.body, { abortEarly: false });
+    const { error } = registerValidation.validate(req.body, {
+        abortEarly: false,
+        allowUnknown: false, // ensures no unknown fields are passed
+    });
 
     if (error) {
         const messages = error.details.map(err => err.message);

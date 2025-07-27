@@ -340,6 +340,7 @@ const AuthPage = () => {
   const handleLogin = useCallback(
     async (e) => {
       e.preventDefault();
+      console.log(loginDataRef.current);
       const { payload } = await dispatch(loginUser(loginDataRef.current));
       console.log("LOGIN PAYLOAD: ", payload);
       if (payload !== "Login failed") {
@@ -389,7 +390,11 @@ const AuthPage = () => {
       //   });
       //   setShowModal(true);
       // }
-      const response = await axios.post(AUTH.SIGNUP, signupData);
+      console.log(signupData);
+      const response = await axios.post(
+        "http://localhost:8000/api/auth/signup",
+        signupData
+      );
       console.log(response);
       if (response?.status == "201") {
         setModalContent({
@@ -444,6 +449,9 @@ const AuthPage = () => {
   const closeModal = useCallback(() => {
     setShowModal(false);
     dispatch(clearError());
+    if (modalContent.title === "Success! ✨" && otpVerified) {
+      navigate("/");
+    }
   }, [dispatch, modalContent]);
 
   // Helper function
@@ -581,7 +589,7 @@ const AuthPage = () => {
                       field === "email" ? "Email Address 📧" : "Password 🔒"
                     }
                     defaultValue={loginDataRef.current[field]}
-                    onChange={(e) => handleLoginChange(e.target.value)}
+                    onChange={handleLoginChange}
                     className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
                     required
                   />

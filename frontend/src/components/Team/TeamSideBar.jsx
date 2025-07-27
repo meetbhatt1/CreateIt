@@ -12,7 +12,7 @@ export const TeamSideBar = () => {
     { href: "/project-dashboard", label: "Projects" },
     { href: "/kanban-board", label: "Tasks" },
     { href: "/my-team", label: "My Teams" },
-    { href: "/under-progress", label: "📝 Your Requests" },
+    { href: "/invitations", label: "📝 Your Requests" },
     { href: "/", label: "Back To Home" },
   ];
   const navigate = useNavigate();

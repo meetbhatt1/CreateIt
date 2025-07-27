@@ -40,8 +40,14 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['contributor', 'mock-interview', 'opensource-consumer', 'other']
     },
-    github: String,
-    linkedin: String,
+    github: {
+        type: String,
+        required: [false]
+    },
+    linkedin: {
+        type: String,
+        required: [false]
+    },
 
     xp: {
         type: Number,

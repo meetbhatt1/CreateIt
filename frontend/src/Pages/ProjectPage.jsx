@@ -1,5 +1,4 @@
-import React, { useEffect } from "react";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Button,
   Dropdown,
@@ -41,8 +40,8 @@ const ProjectPage = () => {
     projectDescription: "",
     projectVisibility: "",
     memberCount: "",
-    memberInfo: "",
   });
+
   const [languageOptions] = useState([
     { value: "js", label: "JavaScript" },
     { value: "react", label: "ReactJs" },
@@ -57,21 +56,18 @@ const ProjectPage = () => {
     { value: "rust", label: "Rust" },
   ]);
 
-  const handleLanguageChange = (id, selectedValues) => {
-    setMemberInfo((prev) =>
-      prev.map((member) =>
-        member.id === id ? { ...member, language: selectedValues } : member
-      )
-    );
-  };
-
   useEffect(() => {
     if (memberCount > 0) {
       const newMemberInfo = [];
-      for (let i = 1; i <= memberCount; i++) {
+      for (let i = 0; i < memberCount; i++) {
         const existingMember = memberInfo.find((member) => member.id === i);
         newMemberInfo.push(
-          existingMember || { id: i, userId: "", role: 0, language: [] }
+          existingMember || {
+            id: i,
+            userId: i === 0 ? userId : null,
+            role: "",
+            language: [],
+          }
         );
       }
       setMemberInfo(newMemberInfo);
@@ -80,22 +76,20 @@ const ProjectPage = () => {
     }
   }, [memberCount]);
 
+  const handleLanguageChange = (id, selectedValues) => {
+    setMemberInfo((prev) =>
+      prev.map((member) =>
+        member.id === id ? { ...member, language: selectedValues } : member
+      )
+    );
+  };
+
   const handleMemberChange = (id, field, value) => {
     setMemberInfo((prev) =>
       prev.map((member) =>
         member.id === id ? { ...member, [field]: value } : member
       )
     );
-
-    // Clear error when user makes changes
-    if (errors.memberInfo[id]) {
-      setErrors((prev) => ({
-        ...prev,
-        memberInfo: prev.memberInfo.map((error, idx) =>
-          idx === id ? "" : error
-        ),
-      }));
-    }
   };
 
   const memberBox = () => {
@@ -103,29 +97,37 @@ const ProjectPage = () => {
 
     return memberInfo.map((member) => {
       const languages = Array.isArray(member.language) ? member.language : [];
+      const isCurrentUser = member.id === 0;
+
       return (
         <div
           key={member.id}
           className="w-full border-2 border-dotted p-3.5 border-gray-400 mb-4 rounded-lg"
         >
           <p className="mb-2 font-semibold text-violet-400">
-            Member {member.id} {member.id === 1 && "(Including You)"}
+            {isCurrentUser ? "You (Creator)" : `Member ${member.id + 1}`}
           </p>
 
-          <Input
-            type="text"
-            placeholder={`Member ${member.id} UserID (optional)`}
-            value={member.id === 1 ? `${userId}` : member.userId}
-            onChange={(e) =>
-              handleMemberChange(member.id, "userId", e.target.value)
-            }
-          />
+          {!isCurrentUser ? (
+            <Input
+              type="text"
+              placeholder="User ID"
+              value={member.userId || ""}
+              onChange={(e) =>
+                handleMemberChange(member.id, "userId", e.target.value)
+              }
+            />
+          ) : (
+            <div className="mb-4">
+              <p className="font-medium">Your ID: {userId}</p>
+            </div>
+          )}
 
           <Dropdown
-            label={`Member ${member.id} Role`}
+            label="Role"
             value={member.role}
-            onChange={(value) =>
-              handleMemberChange(member.id, "role", value.target.value)
+            onChange={(e) =>
+              handleMemberChange(member.id, "role", e.target.value)
             }
             options={roleData}
           />
@@ -142,13 +144,12 @@ const ProjectPage = () => {
               }
             />
           )}
+
           <MultiSelect
             options={languageOptions}
             selectedValues={languages}
             onChange={(selected) => handleLanguageChange(member.id, selected)}
-            label={`${
-              member.id === 1 ? "Your" : `Member ${member.id}`
-            } Languages`}
+            label={`${isCurrentUser ? "Your" : "Member"} Languages`}
           />
         </div>
       );
@@ -156,40 +157,48 @@ const ProjectPage = () => {
   };
 
   const validateForm = () => {
-    const newErrors = { ...errors };
+    const newErrors = {};
     let isValid = true;
 
-    // Project Name validation
     if (!projectName.trim()) {
-      newErrors.projectName = "Don't Even know Your own Project Title??";
+      newErrors.projectName = "Project name is required";
       isValid = false;
     } else if (projectName.trim().length < 3) {
-      newErrors.projectName =
-        "Short Name For a Project (at least 3 characters)";
+      newErrors.projectName = "Name too short (min 3 characters)";
       isValid = false;
     }
 
-    // Project Description validation
-    const desc = String(projectDescription || ""); // Ensure it's a string
-    if (!desc.trim()) {
-      newErrors.projectDescription = "Please describe your project";
+    if (!projectDescription.trim()) {
+      newErrors.projectDescription = "Description is required";
       isValid = false;
-    } else if (desc.trim().length < 10) {
+    } else if (projectDescription.trim().length < 10) {
       newErrors.projectDescription =
-        "Description needs more details (min 10 chars)";
+        "Description too short (min 10 characters)";
       isValid = false;
     }
 
-    // Visibility validation
     if (!projectVisibility) {
-      newErrors.projectVisibility = "Please select visibility";
+      newErrors.projectVisibility = "Visibility is required";
       isValid = false;
     }
 
-    // Member Count validation
-    if (!memberCount || memberCount === "0") {
-      newErrors.memberCount = "There Is No Lone Wolf In Team Project!!!";
+    if (memberCount < 1) {
+      newErrors.memberCount = "At least 1 member is required";
       isValid = false;
+    }
+
+    // Validate member info
+    for (const member of memberInfo) {
+      if (!member.role || member.role === "0") {
+        newErrors.memberInfo = "All members must have a role";
+        isValid = false;
+        break;
+      }
+      if (member.role === "4" && !customRoles[member.id]?.trim()) {
+        newErrors.memberInfo = "Custom role is required";
+        isValid = false;
+        break;
+      }
     }
 
     setErrors(newErrors);
@@ -198,81 +207,82 @@ const ProjectPage = () => {
 
   const submitForm = async () => {
     try {
-      if (!validateForm()) return null;
+      if (!validateForm()) return;
 
-      // Create team with only the creator as member
+      // Prepare team data
       const teamData = {
         title: projectName.trim(),
         description: projectDescription.trim(),
-        visibility: projectVisibility,
-        members: [
-          {
-            userId: localStorage.getItem("userId"),
-            role:
-              memberInfo[0].role === "4"
-                ? customRoles[memberInfo[0].id] || ""
-                : memberInfo[0].role,
-            languages: memberInfo[0].language,
-          },
-        ],
+        visibility: projectVisibility === "1",
+        members: memberInfo.map((member) => ({
+          userId: member.id === 0 ? userId : member.userId || null,
+          role:
+            member.role === "4"
+              ? customRoles[member.id] || ""
+              : roleData.find((r) => r.value === member.role)?.label,
+          languages: member.language,
+        })),
       };
 
-      const response = await axios.post(
-        `http://localhost:8000/api/team/team`,
-        teamData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      console.log("PARAMETERS : ", teamData);
+      console.log("Token : ", localStorage.getItem("token"));
+      // Create team
+      const response = await axios.post(`${API}/team/team`, teamData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+      });
+      console.log(response);
 
-      if (response?.status === 201) {
-        console.log(response?.data);
-        const teamId = response?.data?.team?._id;
-        console.log(teamId);
+      if (response.status === 201) {
+        const teamId = response.data.team._id;
 
         // Send invitations to other members
         const otherMembers = memberInfo.slice(1);
-        const responseInvite = await sendInvitations(teamId, otherMembers);
-        console.log(responseInvite);
+        await sendInvitations(teamId, otherMembers);
 
-        navigate("/");
+        navigate("/invitations");
       }
     } catch (error) {
-      console.error("Error:", error.response?.data || error.message);
+      console.error("Team creation failed:", error);
+      alert(`Team creation failed: ${error}`);
     }
   };
 
   const sendInvitations = async (teamId, members) => {
-    const invitationPromises = members.map((member) => {
-      if (!member.userId) return null;
-      console.log("Sender: ", userId);
-      const requestData = {
-        userId: member.userId,
-        role: member.role === "4" ? customRoles[member.id] || "" : member.role,
-        languages: member.language,
-        sender: userId,
-      };
-      console.log(requestData);
-      return axios.post(
-        `http://localhost:8000/api/team/${teamId}/invite`,
-        requestData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "application/json",
-          },
+    const invitationPromises = members
+      .filter((member) => member.userId)
+      .map(async (member) => {
+        try {
+          const requestData = {
+            userId: member.userId,
+            role:
+              member.role === "4"
+                ? customRoles[member.id] || ""
+                : roleData.find((r) => r.value === member.role)?.label,
+            languages: member.language,
+            sender: userId,
+          };
+
+          await axios.post(`${API}/team/${teamId}/invite`, requestData, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              "Content-Type": "application/json",
+            },
+          });
+          return true;
+        } catch (err) {
+          console.error(`Failed to invite ${member.userId}:`, err);
+          return false;
         }
-      );
-    });
+      });
 
     await Promise.all(invitationPromises);
   };
 
   return (
-    <div className="min-h-screen bg-purple-50">
+    <div className="min-h-screen bg-white-50">
       <Button
         variant="secondary"
         className="btn-primary flex items-center m-2 text-white transition-all"
@@ -284,31 +294,31 @@ const ProjectPage = () => {
       <div className="flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md relative overflow-hidden">
           <div className="text-center mb-8">
-            <h1 className="text-3xl rotate-[1.75deg] font-black font-[fredoka] text-purple-700 mb-2">
+            <h1 className="text-3xl font-black text-purple-700 mb-2">
               💪 Create Team Project
             </h1>
           </div>
-          <div className="m-1 flex-col">
+          <div className="m-1 flex-col space-y-4">
             <Input
               type="text"
-              placeholder="Enter your projectname"
+              placeholder="Project name"
               required
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
               error={errors.projectName}
             />
+
             <Input
               type="textarea"
-              name="projectDescription"
-              placeholder="Enter Description"
+              placeholder="Project description"
               required
               value={projectDescription}
               onChange={(e) => setProjectDescription(e.target.value)}
               error={errors.projectDescription}
             />
+
             <RadioGroup
-              name="Visibility"
-              label="Select Visibility"
+              label="Visibility"
               orientation="horizontal"
               selectedValue={projectVisibility}
               onChange={(e) => setProjectVisibility(e.target.value)}
@@ -318,21 +328,32 @@ const ProjectPage = () => {
               ]}
               error={errors.projectVisibility}
             />
+
             <Dropdown
               value={memberCount}
-              onChange={(e) => setMemberCount(e.target.value)}
+              onChange={(e) => setMemberCount(Number(e.target.value))}
               options={[
-                { value: "0", label: "Select No. Of Members" },
-                { value: "1", label: "Yourself" },
-                { value: "2", label: "2 Members" },
-                { value: "3", label: "3 Members" },
-                { value: "4", label: "4 Members" },
+                { value: 1, label: "Just myself" },
+                { value: 2, label: "2 Members" },
+                { value: 3, label: "3 Members" },
+                { value: 4, label: "4 Members" },
+                { value: 5, label: "5 Members" },
               ]}
               error={errors.memberCount}
             />
+
             {memberCount > 0 && memberBox()}
-            <Button onClick={submitForm} variant="primary">
-              <p>Submit</p>
+
+            {errors.memberInfo && (
+              <p className="text-red-500 text-sm mt-2">{errors.memberInfo}</p>
+            )}
+
+            <Button
+              onClick={submitForm}
+              variant="primary"
+              className="w-full py-3 mt-4"
+            >
+              Create Team
             </Button>
           </div>
         </div>

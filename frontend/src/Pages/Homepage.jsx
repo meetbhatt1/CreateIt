@@ -37,8 +37,8 @@ export const HomePage = () => {
         iconBg="from-indigo-600 to-indigo-800"
       />
       <LanguageSection
-        title="🟢 Node.js Central"
-        projects={groupByTech("Node.js")}
+        title="🟢 Node Central"
+        projects={groupByTech("Node")}
         iconBg="from-purple-600 to-purple-800"
       />
       <InterviewSection />

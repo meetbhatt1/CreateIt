@@ -9,7 +9,7 @@ import {
 } from "../redux/AuthSlice";
 import { Dropdown, Input, MultiSelect } from "../components/ui/UI_Components";
 import axios from "axios";
-import { AUTH } from "../utils/API";
+import API, { AUTH } from "../utils/API";
 
 // Constants
 const EMOJIS = ["😎", "🤓", "🚀", "💻", "🎯", "⚡", "🔥", "🌟", "🎮", "🦄"];
@@ -272,6 +272,7 @@ const AuthPage = () => {
   const [purpose, setpurpose] = useState("");
   const [github, setgithub] = useState("");
   const [linkedin, setlinkedin] = useState("");
+  const [loadingRedirect, setLoadingRedirect] = useState(false);
   const hasNavigatedRef = useRef(false);
 
   // Effects
@@ -300,29 +301,24 @@ const AuthPage = () => {
       signupDataRef.current.email = email;
     }
   }, [otpSent, email]);
+
   useEffect(() => {
     if (otpVerified && isAuthenticated && !hasNavigatedRef.current) {
       const token = localStorage.getItem("token");
       const user = localStorage.getItem("user");
 
       if (token && user) {
-        hasNavigatedRef.current = true; // Prevent repeat execution
+        hasNavigatedRef.current = true;
 
         setModalContent({
           title: "Success! ✅",
-          message: "OTP Verified Successfully. Redirecting...",
+          message: "OTP Verified Successfully.",
           icon: "✅",
         });
         setShowModal(true);
-
-        const timeout = setTimeout(() => {
-          navigate("/");
-        }, 1000);
-
-        return () => clearTimeout(timeout); // Cleanup timeout
       }
     }
-  }, [otpVerified, isAuthenticated, navigate]);
+  }, [otpVerified, isAuthenticated]);
 
   // Handlers
   const handleLoginChange = useCallback((e) => {
@@ -346,7 +342,7 @@ const AuthPage = () => {
       if (payload !== "Login failed") {
         setModalContent({
           title: "Success! ✨",
-          message: payload,
+          message: payload.message,
           icon: "✨",
         });
         setShowModal(true);
@@ -379,22 +375,8 @@ const AuthPage = () => {
       };
 
       signupDataRef.current.email = email;
-
-      // const { payload } = await dispatch(signupUser(signupData));
-      // console.log("SIGNUP PAYLOAD: ", payload);
-      // if (payload !== "Signup failed") {
-      //   setModalContent({
-      //     title: "Success! ✨",
-      //     message: payload,
-      //     icon: "✨",
-      //   });
-      //   setShowModal(true);
-      // }
       console.log(signupData);
-      const response = await axios.post(
-        "http://localhost:8000/api/auth/signup",
-        signupData
-      );
+      const response = await axios.post(`${AUTH.SIGNUP}`, signupData);
       console.log(response);
       if (response?.status == "201") {
         setModalContent({
@@ -449,10 +431,23 @@ const AuthPage = () => {
   const closeModal = useCallback(() => {
     setShowModal(false);
     dispatch(clearError());
-    if (modalContent.title === "Success! ✨" && otpVerified) {
-      navigate("/");
-    }
-  }, [dispatch, modalContent]);
+
+    // Start loader before redirect
+    setLoadingRedirect(true);
+
+    // Small delay so loader is visible
+    const interval = setInterval(() => {
+      const path = localStorage.getItem("pathToGo");
+      const token = localStorage.getItem("token");
+      const user = localStorage.getItem("user");
+
+      if (path && token && user) {
+        clearInterval(interval);
+        navigate(path, { replace: true });
+        setLoadingRedirect(false);
+      }
+    }, 1000);
+  }, [dispatch, navigate]);
 
   // Helper function
   const formatTime = (seconds) => {
@@ -719,6 +714,14 @@ const AuthPage = () => {
           </>
         )}
       </div>
+      {loadingRedirect && (
+        <div className="fixed inset-0 bg-white/90 flex flex-col items-center justify-center z-50">
+          <div className="w-12 h-12 border-4 border-gray-300 border-t-indigo-600 rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-700 font-medium">
+            Redirecting, please wait...
+          </p>
+        </div>
+      )}
 
       {/* Common Modal */}
       <Modal isOpen={showModal} onClose={closeModal} title={modalContent.title}>

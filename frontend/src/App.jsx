@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import "./App.css";
 import { Navbar } from "./components/ui/Navbar";
 import { LeftSidebar } from "./components/layout/LeftSidebar";
@@ -21,53 +21,131 @@ import KanbanBoard from "./components/Team/KanbanBoard";
 import { TeamDashboard } from "./components/Team/TeamDashBoard";
 import { TeamSideBar } from "./components/Team/TeamSideBar";
 import InvitationsPage from "./Pages/InvitationsPage";
-import {
-  InviteNotification,
-  InviteRequest,
-} from "./components/Invite.jsx/InviteNotification";
 import MockInterview from "./Pages/MockInterview";
+import TeamDetailsPage from "./components/Team/TeamDetailsPage";
+import IntroPage from "./Pages/IntroPage";
+import Chat from "./components/Chat/Chat";
+import ProjectDetailPage from "./components/Project/ProjectDetailPage";
+
+const PrivateRoute = ({ isLoggedIn, children }) => {
+  return isLoggedIn ? children : <Navigate to="/auth" />;
+};
+
+const appRoutes = [
+  {
+    path: "/",
+    element: <HomePage />,
+    authRequired: true,
+    sidebar: "left+right",
+  },
+  {
+    path: "/auth",
+    element: <AuthPage />,
+    authRequired: false,
+    sidebar: "none",
+  },
+  {
+    path: "/add-project",
+    element: <AddProject />,
+    authRequired: true,
+    sidebar: "left+right",
+  },
+  {
+    path: "/project-dashboard",
+    element: <ProjectsDashboard />,
+    authRequired: true,
+    sidebar: "left+right",
+  },
+  {
+    path: "/project/:projectId",
+    element: <ProjectDetailPage />,
+    authRequired: true,
+    sidebar: "team",
+  },
+  {
+    path: "/under-progress",
+    element: <UnderProgress />,
+    authRequired: true,
+    sidebar: "left+right",
+  },
+  {
+    path: "/team-project",
+    element: <ProjectPage />,
+    authRequired: true,
+    sidebar: "team",
+  },
+  {
+    path: "/my-team",
+    element: <MyTeam />,
+    authRequired: true,
+    sidebar: "team",
+  },
+  {
+    path: "/team/:teamId/kanban",
+    element: <KanbanBoard />,
+    authRequired: true,
+    sidebar: "team",
+  },
+  {
+    path: "/team/:teamId/chat",
+    element: <Chat />,
+    authRequired: true,
+    sidebar: "team",
+  },
+  {
+    path: "/team/:teamId",
+    element: <TeamDetailsPage />,
+    authRequired: true,
+    sidebar: "team",
+  },
+  {
+    path: "/team/:teamId/dashboard",
+    element: <TeamDashboard />,
+    authRequired: true,
+    sidebar: "team",
+  },
+  {
+    path: "/invitations",
+    element: <InvitationsPage />,
+    authRequired: true,
+    sidebar: "team",
+  },
+  {
+    path: "/mock-interview",
+    element: <MockInterview />,
+    authRequired: true,
+    sidebar: "none",
+  },
+];
+
 const Layout = ({ children }) => {
   const location = useLocation();
-
-  const routesWithSidebar = ["/", "/add-project", "/under-progress"];
-  const routesWithTeamSidebar = [
-    "/team-dashboard",
-    "/project-dashboard",
-    "/my-team",
-    "/invitations",
-  ];
-  const routesWithRightSidebar = ["/", "/add-project", "/under-progress"];
-
-  const showSidebar = routesWithSidebar.includes(location.pathname);
-  const showRightSidebar = routesWithRightSidebar.includes(location.pathname);
-  const showTeamSidebar = routesWithTeamSidebar.includes(location.pathname);
+  const currentRoute = appRoutes.find((r) =>
+    location.pathname.match(new RegExp(`^${r.path.replace(/:\w+/g, "[^/]+")}$`))
+  );
+  const sidebarType = currentRoute?.sidebar || "none";
 
   return (
-    <div className="min-h-screen max-w-screen p-4 bg-gradient-to-br from-blue-50 to-purple-50 bg-fixed font-['Comic_Neue']">
-      {/* Navbar */}
+    <div className="min-h-screen max-w-screen p-4 bg-gradient-to-br from-indigo-100 to-purple-100 bg-fixed font-['Comic_Neue']">
       <div className="w-full p-3 m-2.5">
         <Navbar />
       </div>
 
-      {/* Main Content */}
       <div className="flex flex-row">
-        {/* Left Sidebar */}
-        {showSidebar && (
+        {sidebarType === "left+right" && (
           <div className="hidden md:block min-w-[260px] xl:w-[280px]">
             <LeftSidebar />
           </div>
         )}
-        {showTeamSidebar && (
+        {sidebarType === "team" && (
           <div className="hidden md:block min-w-[260px] xl:w-[280px]">
             <TeamSideBar />
           </div>
         )}
 
-        {/* Page Content */}
         <div className="flex-1 px-4">{children}</div>
 
-        {/* Right Sidebar */}
-        {showRightSidebar && (
+        {sidebarType === "left+right" && (
           <div className="hidden xl:block min-w-[260px]">
             <RightSidebar />
           </div>
@@ -78,61 +156,60 @@ const Layout = ({ children }) => {
 };
 
 const App = () => {
-  const user = localStorage.getItem("user");
-  const isLoggedIn = user && user.length > 0;
+  const isLoggedIn = useMemo(async () => {
+    const user = await localStorage.getItem("user");
+    return (await user?.email?.length) > 0;
+  }, []);
+
+  useEffect(() => {
+    console.log(isLoggedIn);
+  }, [isLoggedIn]);
+
+  const [introSeen, setIntroSeen] = useState(true);
+
+  useEffect(() => {
+    const seen = localStorage.getItem("introSeen");
+    if (!seen) {
+      setIntroSeen(false);
+    }
+  }, []);
+
+  const handleIntroFinish = () => {
+    localStorage.setItem("introSeen", "true");
+    setIntroSeen(true);
+  };
 
   return (
     <Router>
-      <Layout>
+      {!introSeen ? (
         <Routes>
           <Route
-            path="/"
-            element={isLoggedIn ? <HomePage /> : <Navigate to="/auth" />}
-          />
-          <Route
-            path="/auth"
-            element={isLoggedIn ? <Navigate to="/" /> : <AuthPage />}
-          />
-          <Route
-            path="/add-project"
-            element={isLoggedIn ? <AddProject /> : <Navigate to="/auth" />}
-          />
-          <Route
-            path="/project-dashboard"
-            element={
-              isLoggedIn ? <ProjectsDashboard /> : <Navigate to="/auth" />
-            }
-          />
-          <Route
-            path="/under-progress"
-            element={isLoggedIn ? <UnderProgress /> : <Navigate to="/auth" />}
-          />
-          <Route
-            path="/team-project"
-            element={isLoggedIn ? <ProjectPage /> : <Navigate to="/auth" />}
-          />
-          <Route
-            path="/my-team"
-            element={isLoggedIn ? <MyTeam /> : <Navigate to="/auth" />}
-          />
-          <Route
-            path="/kanban-board"
-            element={isLoggedIn ? <KanbanBoard /> : <Navigate to="/auth" />}
-          />
-          <Route
-            path="/team-dashboard"
-            element={isLoggedIn ? <TeamDashboard /> : <Navigate to="/auth" />}
-          />
-          <Route
-            path="/invitations"
-            element={isLoggedIn ? <InvitationsPage /> : <Navigate to="/auth" />}
-          />
-          <Route
-            path="/mock-interview"
-            element={isLoggedIn ? <MockInterview /> : <Navigate to="/auth" />}
+            path="*"
+            element={<IntroPage onFinish={handleIntroFinish} />}
           />
         </Routes>
-      </Layout>
+      ) : (
+        <Layout>
+          <Routes>
+            {appRoutes.map(({ path, element, authRequired }, index) => (
+              <Route
+                key={index}
+                path={path}
+                element={
+                  authRequired ? (
+                    <PrivateRoute isLoggedIn={isLoggedIn}>
+                      {element}
+                    </PrivateRoute>
+                  ) : (
+                    element
+                  )
+                }
+              />
+            ))}
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </Layout>
+      )}
     </Router>
   );
 };

@@ -1,7 +1,9 @@
+// src/components/language/LanguageSection.jsx
 import React from "react";
 import { Card } from "../ui/Card";
 import { ProjectCard } from "../ui/ProjectCard";
 import { Button } from "../ui/UI_Components";
+import { useNavigate } from "react-router-dom";
 
 export const LanguageSection = ({
   title,
@@ -9,6 +11,8 @@ export const LanguageSection = ({
   projects,
   iconBg = "from-indigo-500 to-purple-600",
 }) => {
+  const navigate = useNavigate();
+
   return (
     <Card
       className="mb-8 relative"
@@ -24,15 +28,23 @@ export const LanguageSection = ({
         </h2>
         <Button variant="primary">See More Cool Stuff!</Button>
       </div>
+
+      {/* Projects grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {projects.map((project, index) => (
-          <ProjectCard
-            key={index}
-            {...project}
-            rotation={index % 2 === 0 ? "rotate-1" : "-rotate-1"}
-          />
+          <div
+            key={project._id}
+            onClick={() => navigate(`/project/${project._id}`)}
+            className="cursor-pointer"
+          >
+            <ProjectCard
+              {...project}
+              rotation={index % 2 === 0 ? "rotate-1" : "-rotate-1"}
+            />
+          </div>
         ))}
       </div>
+
       <div className="absolute top-5 right-8 text-2xl opacity-70">✨</div>
     </Card>
   );

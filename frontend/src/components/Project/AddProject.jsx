@@ -106,6 +106,7 @@ export default function AddProject() {
       let ownerId = localStorage.getItem("userId");
       if (!ownerId) ownerId = "665f0aee4f9abcde12345678";
       data.append("ownerId", ownerId);
+      // const res = await axios.post(`${API}/projects/create`, data, {
       const res = await axios.post(`${API}/projects/create`, data, {
         headers: { "Content-Type": "multipart/form-data" },
       });

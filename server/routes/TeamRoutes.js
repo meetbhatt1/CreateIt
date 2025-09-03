@@ -7,25 +7,27 @@ import {
     joinPublicTeam,
     getTeamsByUser,
     getUserInvitations,
-    respondToInvite
+    respondToInvite,
+    getPublicTeams,
+    requestToJoinTeam,
+    getJoinRequests,
+    respondToJoinRequest
 } from '../controllers/TeamController.js';
 import { auth } from '../middleware/AuthMiddleware.js';
 
 const router = express.Router();
 
-// Create a new team
 router.post('/team', auth, createTeam);
-// Get team details
-router.get('/:teamId', auth, getTeamDetails);
-// Invite a user to a team
-router.post('/:teamId/invite', auth, inviteUser);
-// Accept an invite
+router.get('/public', auth, getPublicTeams);
+router.post('/:teamId/invite', inviteUser);
 router.post('/invite/accept/:token', auth, acceptInvite);
-router.get('/user/invitations', auth, getUserInvitations);
+router.get('/:userId/invitations', getUserInvitations);
 router.post('/invite/:inviteId/respond', auth, respondToInvite);
-// Join a public team
+router.post('/:teamId/request-join', auth, requestToJoinTeam);
+router.get('/owner/requests', auth, getJoinRequests);
+router.post('/request/:requestId/respond', auth, respondToJoinRequest);
 router.post('/:teamId/join', auth, joinPublicTeam);
-// Get team by user
 router.get('/user/:id', getTeamsByUser);
+router.get('/:teamId', auth, getTeamDetails);
 
 export default router;

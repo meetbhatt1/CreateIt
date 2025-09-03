@@ -10,6 +10,9 @@ const InvitationsPage = () => {
   const [invites, setInvites] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const user = JSON.parse(localStorage.getItem("user"));
+  const userId = user?._id;
+  console.log("USER ID INVITATIONS:", userId);
 
   useEffect(() => {
     fetchInvitations();
@@ -17,33 +20,15 @@ const InvitationsPage = () => {
 
   const fetchInvitations = async () => {
     try {
-      const response = await axios.get(
-        `http://localhost:8000/api/team/user/invitations`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+      const response = await axios.get(`${API}/team/${userId}/invitations`);
+      console.log(response?.data);
       setInvites(response.data.pending);
       setNotifications(response.data.history);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching invitations:", error);
+      setLoading(false);
     }
-  };
-
-  const updateInviteStatus = (id, status) => {
-    setInvites(invites.filter((invite) => invite._id !== id));
-    setNotifications([
-      {
-        _id: id,
-        teamName: invites.find((i) => i._id === id)?.teamName,
-        status,
-        timestamp: "Just now",
-      },
-      ...notifications,
-    ]);
   };
 
   if (loading) return <div>Loading invitations...</div>;

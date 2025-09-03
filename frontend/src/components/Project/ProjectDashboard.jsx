@@ -6,7 +6,6 @@ export default function ProjectsDashboard() {
   const [projects, setProjects] = useState([]);
   const [error, setError] = useState("");
 
-  // Dummy project to show if none exist
   const fakeProject = {
     _id: "dummy-project-id",
     title: "Sample AI Project",
@@ -57,7 +56,7 @@ export default function ProjectsDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-10 px-4 sm:px-8">
+    <div className="min-h-screen bg-white-40 py-10 px-4 sm:px-8">
       <h1 className="text-3xl font-bold text-center mb-6">My Projects</h1>
 
       {error && (

@@ -2,8 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import API from '../utils/API';
 
-// const API_BASE_URL = `${API}/auth`;
-const API_BASE_URL = `http://localhost:8000/api/auth`
+const API_BASE_URL = `${API}/auth`;
 
 // Existing login action
 export const loginUser = createAsyncThunk(
@@ -11,16 +10,22 @@ export const loginUser = createAsyncThunk(
     async (userData, { rejectWithValue }) => {
         try {
             const response = await axios.post(`${API_BASE_URL}/login`, userData);
-            localStorage.setItem('token', response?.data?.token);
-            localStorage.setItem('user', JSON.stringify(response?.data?.user));
-            localStorage.setItem('userId', response.data.user._id);
-            console.log(response?.data);
-            return response?.data?.message;
+
+            const { token, user, message } = response.data;
+
+            if (token) {
+                localStorage.setItem('token', token);
+                localStorage.setItem('user', JSON.stringify(user));
+                localStorage.setItem('userId', user._id);
+            }
+
+            return { token, user, message };
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Login failed');
         }
     }
 );
+
 
 // New OTP verification action
 export const verifyOTP = createAsyncThunk(
@@ -94,9 +99,12 @@ export const completeGoogleProfile = createAsyncThunk(
     }
 );
 
+const storedUser = localStorage.getItem('user');
+const storedToken = localStorage.getItem('token');
+
 const initialState = {
-    user: null,
-    isAuthenticated: false,
+    user: storedUser ? JSON.parse(storedUser) : null,
+    isAuthenticated: !!storedToken,
     isLoading: false,
     error: null,
     otpSent: false,
@@ -105,6 +113,7 @@ const initialState = {
     needsProfileCompletion: false,
     googleUserData: null
 };
+
 
 const authSlice = createSlice({
     name: 'auth',
@@ -121,7 +130,10 @@ const authSlice = createSlice({
             state.isGoogleUser = false;
             state.needsProfileCompletion = false;
             state.googleUserData = null;
+
             localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('userId');
         },
         resetOtpState: (state) => {
             state.otpSent = false;

@@ -3,13 +3,10 @@ import {
     createProject,
     getAllProjects,
     getMyProjects,
-    requestAccess,
-    // handleAccessRequest,
+    getProjectById,
     deleteProject
 } from '../controllers/ProjectController.js';
-// import { protect } from '../middlewares/authMiddleware.js';
 
-// Multer setup for zip file uploads
 import multer from 'multer';
 import path from 'path';
 
@@ -50,9 +47,8 @@ router.post('/create', upload.fields([
     { name: 'screenshots', maxCount: 10 }
 ]), createProject);
 router.get('/all', getAllProjects);
+router.get('/:id', getProjectById);
 router.get('/my-projects/:id', getMyProjects);
-// router.post('/request-access', protect, requestAccess);
-// router.post('/handle-access', protect, handleAccessRequest);
 router.delete('/:userId/:projectId', deleteProject);
 
 export default router;

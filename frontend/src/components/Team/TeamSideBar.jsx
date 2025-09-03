@@ -1,21 +1,39 @@
-import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Card } from "../ui/Card";
 import { SidebarMenuItem } from "../sidebar/SidebarMenuItem";
+import axios from "axios";
+import API from "../../utils/API";
 
 export const TeamSideBar = () => {
+  const [teamId, setTeamID] = useState();
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  useEffect(() => {
+    const fetchTeams = async () => {
+      try {
+        if (!user?._id) return;
+        const res = await axios.get(`${API}/team/user/${user._id}`);
+        setTeamID(res?.data[0]?._id);
+      } catch (err) {
+        console.error("Error fetching teams:", err);
+      }
+    };
+
+    fetchTeams();
+  }, []);
+
   const location = useLocation();
-  const currentPath = location.pathname;
+  const navigate = useNavigate();
 
   const menuItems = [
-    { href: "/team-dashboard", label: "DashBoard" },
-    { href: "/project-dashboard", label: "Projects" },
-    { href: "/kanban-board", label: "Tasks" },
-    { href: "/my-team", label: "My Teams" },
+    { href: `/team/${teamId}/dashboard`, label: "Dashboard" },
+    { href: `/my-team`, label: "Project" },
+    { href: `/team/${teamId}/kanban`, label: "Tasks" },
+    { href: `/team/${teamId}/chat`, label: "Team Chat" },
     { href: "/invitations", label: "📝 Your Requests" },
     { href: "/", label: "Back To Home" },
   ];
-  const navigate = useNavigate();
 
   return (
     <Card className="p-6" rotation="rotate-0" hoverRotation="rotate-1">
@@ -29,8 +47,8 @@ export const TeamSideBar = () => {
             onClick={() => navigate(item.href)}
             isActive={
               item.href === "/"
-                ? currentPath === "/"
-                : currentPath.startsWith(item.href)
+                ? location.pathname === "/"
+                : location.pathname.startsWith(item.href)
             }
           >
             {item.label}

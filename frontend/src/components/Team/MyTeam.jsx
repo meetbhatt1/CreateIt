@@ -232,10 +232,10 @@ export const MyTeam = () => {
               <Button
                 size="sm"
                 variant="secondary"
-                onClick={() => navigate(`/team/${team._id}/dashboard`)}
+                onClick={() => navigate(`/team/${team._id}/chat`)}
                 className="text-xs"
               >
-                Dashboard
+                Project Chat
               </Button>
             )}
           </div>

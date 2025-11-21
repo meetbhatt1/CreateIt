@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { getSocket } from "../../utils/socket";
 import axios from "axios";
+import { useNavigate, useParams } from "react-router-dom";
+import { Button } from "../ui/UI_Components";
 
-/* -------------------------
-   Helpers & Utilities
-   ------------------------- */
 const EMOJIS = [
   "👍",
   "👎",
@@ -48,7 +47,7 @@ function createMessage({
   type = "text",
   own = true,
   sender = "You",
-  avatar = "MB",
+  avatar = sender.toString().substring(0, 0),
   meta = {},
   timestamp = nowTime(),
   _id = null,
@@ -69,7 +68,7 @@ function createMessage({
 }
 
 /* -------------------------
-   UI Primitives
+   UI MATERIALS
    ------------------------- */
 const Surface = ({ className, children }) => (
   <div className={classNames("bg-white rounded-2xl shadow-sm", className)}>
@@ -88,17 +87,6 @@ const IconBtn = ({ children, title, onClick, className }) => (
   >
     {children}
   </button>
-);
-
-const Pill = ({ children, className }) => (
-  <span
-    className={classNames(
-      "text-xs px-2 py-0.5 rounded-full bg-indigo-600 text-white",
-      className
-    )}
-  >
-    {children}
-  </span>
 );
 
 const Avatar = ({ text, size = "md" }) => (
@@ -660,224 +648,238 @@ function Composer({ onSendMessage }) {
 }
 
 /* -------------------------
-   Room Creation Modal
+   Team Members Sidebar
    ------------------------- */
-function CreateRoomModal({ isOpen, onClose, onCreateRoom }) {
-  const [roomName, setRoomName] = useState("");
-  const [roomDescription, setRoomDescription] = useState("");
-  const [roomSlug, setRoomSlug] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!roomName.trim() || !roomSlug.trim()) return;
-
-    setIsLoading(true);
-    await onCreateRoom({
-      name: roomName.trim(),
-      description: roomDescription.trim(),
-      slug: roomSlug.trim(),
-    });
-    setIsLoading(false);
-    setRoomName("");
-    setRoomDescription("");
-    setRoomSlug("");
-    onClose();
-  };
-
-  if (!isOpen) return null;
-
+function TeamMembersSidebar({ team, members, currentUser, navigate }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg w-full max-w-md p-6">
-        <h2 className="text-xl font-bold mb-4">Create New Room</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Room Name</label>
-            <input
-              type="text"
-              value={roomName}
-              onChange={(e) => setRoomName(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md"
-              placeholder="Enter room name"
-              required
-            />
+    <div className="bg-white rounded-2xl shadow p-3 h-full">
+      <Button
+        className="w-[100%] mb-5"
+        variant="primary"
+        onClick={() => navigate(`/my-team`)}
+      >
+        Back To project
+      </Button>
+      <h3 className="text-lg place-self-center font-semibold mb-3">
+        Team Members
+      </h3>
+      <div className="space-y-2">
+        {members.map((member) => (
+          <div
+            key={member._id}
+            className="flex items-center gap-3 p-2 rounded hover:bg-gray-50"
+          >
+            <Avatar text={member.name} size="sm" />
+            <div className="flex-1">
+              <div className="font-medium text-sm">
+                {member.name}
+                {member._id === currentUser?._id && " (You)"}
+              </div>
+              <div className="text-xs text-gray-500">
+                {member.role || "Member"}
+              </div>
+            </div>
+            {member.isOnline && (
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            )}
           </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Room Slug</label>
-            <input
-              type="text"
-              value={roomSlug}
-              onChange={(e) => setRoomSlug(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md"
-              placeholder="Enter unique slug"
-              required
-            />
+        ))}
+      </div>
+
+      <div className="mt-4 pt-3 border-t">
+        <h4 className="font-medium text-sm mb-2">Team Info</h4>
+        <div className="text-xs text-gray-600 space-y-1">
+          <div>
+            <strong>Project:</strong> {team?.title || "N/A"}
           </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
-              Description (Optional)
-            </label>
-            <textarea
-              value={roomDescription}
-              onChange={(e) => setRoomDescription(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md"
-              placeholder="Enter room description"
-              rows={3}
-            />
+          <div>
+            <strong>Description:</strong> {team?.description || "N/A"}
           </div>
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading || !roomName.trim() || !roomSlug.trim()}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md disabled:opacity-50"
-            >
-              {isLoading ? "Creating..." : "Create Room"}
-            </button>
+          <div>
+            <strong>Created:</strong>{" "}
+            {team?.createdAt
+              ? new Date(team.createdAt).toLocaleDateString()
+              : "N/A"}
           </div>
-        </form>
+          <div>
+            <strong>Members:</strong> {members.length}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
 /* -------------------------
-   Join Room Modal
+   Main Team Chat Component
    ------------------------- */
-function JoinRoomModal({ isOpen, onClose, onJoinRoom, availableRooms }) {
-  const [selectedRoom, setSelectedRoom] = useState("");
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!selectedRoom) return;
-
-    onJoinRoom(selectedRoom);
-    setSelectedRoom("");
-    onClose();
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg w-full max-w-md p-6">
-        <h2 className="text-xl font-bold mb-4">Join a Room</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
-              Select Room
-            </label>
-            <select
-              value={selectedRoom}
-              onChange={(e) => setSelectedRoom(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md"
-              required
-            >
-              <option value="">Choose a room to join</option>
-              {availableRooms.map((room) => (
-                <option key={room._id} value={room.slug}>
-                  {room.name} ({room.slug}) - {room.members?.length || 0}{" "}
-                  members
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!selectedRoom}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md disabled:opacity-50"
-            >
-              Join Room
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-/* -------------------------
-   Main App
-   ------------------------- */
-export default function DevChat() {
-  const [modeView, setModeView] = useState("group");
-  const [chats, setChats] = useState({ private: [], group: [] });
-  const [messages, setMessages] = useState({});
-  const [activeChatId, setActiveChatId] = useState(null);
+export default function TeamChat() {
+  const params = useParams();
+  const teamId = params.teamId;
+  const navigate = useNavigate();
+  const [team, setTeam] = useState(null);
+  const [members, setMembers] = useState([]);
+  const [messages, setMessages] = useState([]);
   const [filter, setFilter] = useState("all");
   const [q, setQ] = useState("");
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [codeModalContent, setCodeModalContent] = useState("");
-  const [roomJoined, setRoomJoined] = useState(null);
-  const [showCreateRoom, setShowCreateRoom] = useState(false);
-  const [showJoinRoom, setShowJoinRoom] = useState(false);
-  const [availableRooms, setAvailableRooms] = useState([]);
-  const [users, setUsers] = useState([]);
   const [typingUsers, setTypingUsers] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const socketRef = useRef(null);
+  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 
-  const activeChat =
-    (chats[modeView] || []).find((c) => c.id === activeChatId) ||
-    chats[modeView][0];
+  const teamRoomSlug = `team-${teamId}`;
 
-  // Initialize socket connection
+  // Initialize team chat
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const socket = getSocket(token);
-    socketRef.current = socket;
+    if (!teamId) {
+      setError("No team ID provided");
+      setIsLoading(false);
+      return;
+    }
 
-    // Set up event listeners
-    socket.on("chat:joined", (data) => {
-      setRoomJoined(data.roomId);
-      setChats((prev) => ({
-        ...prev,
-        group: [
-          ...prev.group,
+    const initializeTeamChat = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          throw new Error("No authentication token found");
+        }
+
+        // Fetch team details
+        const teamResponse = await axios.get(
+          `http://localhost:8000/api/team/${teamId}`,
           {
-            id: data.roomId,
-            name: data.slug,
-            avatar: data.slug.slice(0, 2).toUpperCase(),
-            slug: data.slug,
-          },
-        ],
-      }));
-      setActiveChatId(data.roomId);
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
-      // Fetch message history
-      fetchMessageHistory(data.slug);
-    });
+        if (teamResponse.data) {
+          const teamData = teamResponse.data;
+          setTeam(teamData);
+          console.log("Team data:", teamData);
 
-    // In the socket message handler, replace this section:
-    socket.on("chat:message", (payload) => {
+          // Extract members from the team data structure
+          const formattedMembers = extractMembersFromTeamData(
+            teamData,
+            currentUser
+          );
+          setMembers(formattedMembers);
+        }
+
+        // Initialize socket connection
+        const socket = getSocket(token);
+        socketRef.current = socket;
+
+        // Join team room via socket
+        socket.emit("chat:join", {
+          slug: teamRoomSlug,
+          name: teamResponse.data?.title || `Team ${teamId}`,
+          description:
+            teamResponse.data?.description || "Team collaboration space",
+        });
+
+        // Set up socket listeners
+        socket.on("chat:joined", (data) => {
+          console.log("Joined team room:", data);
+          // Fetch message history after joining
+          fetchMessageHistory();
+        });
+
+        socket.on("chat:message", (payload) => {
+          // Only process messages for our team room
+          if (payload.room === teamRoomSlug) {
+            handleIncomingMessage(payload);
+          }
+        });
+
+        socket.on("chat:typing", (data) => {
+          setTypingUsers((prev) => ({
+            ...prev,
+            [data.userId]: data.isTyping ? Date.now() : null,
+          }));
+        });
+
+        socket.on("chat:error", (error) => {
+          console.error("Chat error:", error);
+          setError(error.message || "An error occurred in chat");
+        });
+
+        socket.on("chat:deleted", (data) => {
+          setMessages((prev) => prev.filter((m) => m.id !== data.messageId));
+        });
+      } catch (error) {
+        console.error("Failed to initialize team chat:", error);
+        setError(error.response?.data?.message || "Failed to load team chat");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Helper function to extract members from team data
+    const extractMembersFromTeamData = (teamData, currentUser) => {
+      const members = [];
+
+      // Add owner as a member
+      if (teamData.owner) {
+        members.push({
+          _id: teamData.owner._id,
+          name: teamData.owner.email.split("@")[0], // Use email prefix as name
+          email: teamData.owner.email,
+          role: "Owner",
+          isOnline: true,
+        });
+      }
+
+      // Add team members
+      if (teamData.members && Array.isArray(teamData.members)) {
+        teamData.members.forEach((member) => {
+          if (member.user && member.status === "accepted") {
+            members.push({
+              _id: member.user._id,
+              name: member.user.email.split("@")[0], // Use email prefix as name
+              email: member.user.email,
+              role: member.role || "Member",
+              isOnline: Math.random() > 0.3, // Random online status for demo
+            });
+          }
+        });
+      }
+
+      // Ensure current user is in the list
+      const currentUserInMembers = members.some(
+        (member) => member._id === currentUser._id
+      );
+      if (!currentUserInMembers && currentUser._id) {
+        members.push({
+          _id: currentUser._id,
+          name: currentUser.name || currentUser.email.split("@")[0],
+          email: currentUser.email,
+          role: "Member",
+          isOnline: true,
+        });
+      }
+
+      return members;
+    };
+
+    // Helper function to handle incoming messages
+    const handleIncomingMessage = (payload) => {
       setMessages((prev) => {
-        const roomKey = payload.room;
-        const existingMessages = prev[roomKey] || [];
-
         // If this is a confirmation of our optimistic message
         if (payload.tempId) {
-          const updatedMessages = existingMessages.map((msg) =>
-            msg._id === payload._id
+          return prev.map((msg) =>
+            msg.id === payload.tempId
               ? createMessage({
                   text: payload.message,
                   type: payload.type,
                   own: true,
                   sender: "You",
-                  avatar: "MB",
+                  avatar: "YO",
                   meta: payload.meta || {},
                   timestamp: new Date(payload.createdAt).toLocaleTimeString(
                     [],
@@ -886,27 +888,23 @@ export default function DevChat() {
                       minute: "2-digit",
                     }
                   ),
-                  _id: payload._id, // replace with real ID
+                  _id: payload._id,
                 })
               : msg
           );
-          return { ...prev, [roomKey]: updatedMessages };
         }
+
+        const isOwnMessage = payload.sender?._id === currentUser._id;
 
         const msg = createMessage({
           text: payload.message,
           type: payload.type,
-          own: payload.sender === getCurrentUserId(),
-          sender:
-            payload.sender === getCurrentUserId()
-              ? "You"
-              : `User ${payload.sender}`,
-          avatar:
-            payload.sender === getCurrentUserId()
-              ? "MB"
-              : (
-                  payload.senderAvatar || String(payload.sender).slice(0, 2)
-                ).toUpperCase(),
+          own: isOwnMessage,
+          sender: payload.sender?.name || "Unknown User",
+          avatar: (
+            payload.sender?.avatar ||
+            String(payload.sender?.name || "U").slice(0, 2)
+          ).toUpperCase(),
           meta: payload.meta || {},
           timestamp: new Date(payload.createdAt).toLocaleTimeString([], {
             hour: "2-digit",
@@ -915,24 +913,11 @@ export default function DevChat() {
           _id: payload._id,
         });
 
-        return { ...prev, [roomKey]: [...existingMessages, msg] };
+        return [...prev, msg];
       });
-    });
+    };
 
-    socket.on("chat:typing", (data) => {
-      setTypingUsers((prev) => ({
-        ...prev,
-        [data.userId]: data.isTyping ? Date.now() : null,
-      }));
-    });
-
-    socket.on("chat:error", (error) => {
-      console.error("Socket error:", error);
-      alert(error.message || "An error occurred");
-    });
-
-    // Fetch available rooms
-    fetchAvailableRooms();
+    initializeTeamChat();
 
     return () => {
       if (socketRef.current) {
@@ -940,9 +925,10 @@ export default function DevChat() {
         socketRef.current.off("chat:message");
         socketRef.current.off("chat:typing");
         socketRef.current.off("chat:error");
+        socketRef.current.off("chat:deleted");
       }
     };
-  }, []);
+  }, [teamId]);
 
   // Clean up typing indicators after 3 seconds
   useEffect(() => {
@@ -962,50 +948,31 @@ export default function DevChat() {
     return () => clearInterval(interval);
   }, []);
 
-  const getCurrentUserId = () => {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    return user._id || null;
-  };
-
-  const fetchAvailableRooms = async () => {
+  const fetchMessageHistory = async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        "http://localhost:8000/api/chat/available-rooms",
+        `http://localhost:8000/api/chat/rooms/${teamRoomSlug}/history`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (response?.data?.success) {
-        setAvailableRooms(response.data.rooms);
-      }
-    } catch (error) {
-      console.error("Failed to fetch available rooms:", error);
-    }
-  };
-
-  const fetchMessageHistory = async (slug) => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `http://localhost:8000/api/chat/rooms/${slug}/history?limit=30`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
+          params: { limit: 50 },
         }
       );
 
       if (response.data) {
         const data = response.data;
+        const messageArray = data.messages || [];
 
-        const formattedMessages = (data.messages || []).map((msg) =>
-          createMessage({
+        const formattedMessages = messageArray.map((msg) => {
+          const isOwnMessage = msg.sender?._id === currentUser._id;
+
+          return createMessage({
             text: msg.message,
             type: msg.type,
-            own: msg.sender._id === getCurrentUserId(),
-            sender: msg.sender.name || `User ${msg.sender._id}`,
+            own: isOwnMessage,
+            sender: msg.sender?.name || "Unknown User",
             avatar: (
-              msg.sender.avatar || String(msg.sender._id).slice(0, 2)
+              msg.sender?.avatar || String(msg.sender?.name || "U").slice(0, 2)
             ).toUpperCase(),
             meta: msg.meta || {},
             timestamp: new Date(msg.createdAt).toLocaleTimeString([], {
@@ -1013,89 +980,21 @@ export default function DevChat() {
               minute: "2-digit",
             }),
             _id: msg._id,
-          })
-        );
+          });
+        });
 
-        setMessages((prev) => ({ ...prev, [slug]: formattedMessages }));
+        setMessages(formattedMessages);
       }
     } catch (error) {
       console.error("Failed to fetch message history:", error);
-    }
-  };
-
-  const handleCreateRoom = async (roomData) => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        "http://localhost:8000/api/chat/rooms",
-        roomData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log(response?.data);
-      if (response.data) {
-        // Join the room after creation
-        handleJoinRoom(response.data.room.slug);
-        fetchAvailableRooms(); // Refresh room list
-      }
-    } catch (error) {
-      console.error("Failed to create room:", error);
-      alert(error.response?.data?.message || "Failed to create room");
-    }
-  };
-
-  const handleJoinRoom = async (slug) => {
-    try {
-      // First join via HTTP API to become a member
-      const token = localStorage.getItem("token");
-      await axios.post(
-        `http://localhost:8000/api/chat/rooms/${slug}/join`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      // Then join via socket
-      socketRef.current.emit("chat:join", {
-        slug,
-        name: slug,
-        description: `Room for ${slug}`,
-      });
-
-      // Refresh available rooms to update member counts
-      fetchAvailableRooms();
-    } catch (error) {
-      console.error("Failed to join room:", error);
-      alert(error.response?.data?.message || "Failed to join room");
-    }
-  };
-
-  const handleLeaveRoom = () => {
-    if (roomJoined) {
-      try {
-        // Remove from local state
-        setChats((prev) => ({
-          ...prev,
-          group: prev.group.filter((c) => c.id !== roomJoined),
-        }));
-        setRoomJoined(null);
-        setActiveChatId(null);
-
-        // Refresh available rooms
-        fetchAvailableRooms();
-      } catch (error) {
-        console.error("Failed to leave room:", error);
-      }
+      // Start with empty messages if history can't be loaded
+      setMessages([]);
     }
   };
 
   const handleSendMessage = ({ type = "text", text = "", meta = {} }) => {
-    if (!roomJoined) return;
+    if (!teamId || !socketRef.current) return;
+
     const tempId =
       Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
@@ -1111,16 +1010,11 @@ export default function DevChat() {
     });
 
     // Update local state immediately (optimistic update)
-    setMessages((prev) => {
-      const copy = { ...prev };
-      const arr = copy[roomJoined] ? [...copy[roomJoined], msg] : [msg];
-      copy[roomJoined] = arr;
-      return copy;
-    });
+    setMessages((prev) => [...prev, msg]);
 
     try {
       socketRef.current.emit("chat:send", {
-        roomId: roomJoined,
+        roomId: teamRoomSlug, // Use the team room slug as roomId
         type,
         message: text,
         meta,
@@ -1128,22 +1022,20 @@ export default function DevChat() {
       });
     } catch (error) {
       console.error("Failed to send message:", error);
-      setMessages((prev) => ({
-        ...prev,
-        [roomJoined]: (prev[roomJoined] || []).filter((m) => m.id !== tempId),
-      }));
+      // Remove optimistic message on error
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      setError("Failed to send message");
     }
   };
 
   const editMessage = (id) => {
-    const cur = messages[roomJoined] || [];
-    const idx = cur.findIndex((m) => m.id === id);
+    const idx = messages.findIndex((m) => m.id === id);
     if (idx === -1) return;
 
-    const newText = window.prompt("Edit message", cur[idx].message);
+    const newText = window.prompt("Edit message", messages[idx].message);
     if (newText == null) return;
 
-    const next = [...cur];
+    const next = [...messages];
     next[idx] = {
       ...next[idx],
       message: newText,
@@ -1151,38 +1043,33 @@ export default function DevChat() {
       timestamp: nowTime(),
     };
 
-    setMessages((prev) => ({ ...prev, [roomJoined]: next }));
+    setMessages(next);
   };
 
   const deleteMessage = (id) => {
     if (!confirm("Delete message?")) return;
 
-    setMessages((prev) => ({
-      ...prev,
-      [roomJoined]: (prev[roomJoined] || []).filter((m) => m.id !== id),
-    }));
+    // Optimistic delete
+    setMessages((prev) => prev.filter((m) => m.id !== id));
 
     // Emit socket event
-    if (roomJoined) {
+    if (socketRef.current) {
       socketRef.current.emit("chat:delete", {
         messageId: id,
-        roomId: roomJoined,
+        roomId: teamRoomSlug,
       });
     }
   };
 
   const togglePin = (id) => {
-    setMessages((prev) => {
-      const arr = (prev[roomJoined] || []).map((m) =>
-        m.id === id ? { ...m, pinned: !m.pinned } : m
-      );
-      return { ...prev, [roomJoined]: arr };
-    });
+    setMessages((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, pinned: !m.pinned } : m))
+    );
   };
 
   const reactMessage = (id, emoji) => {
-    setMessages((prev) => {
-      const arr = (prev[roomJoined] || []).map((m) => {
+    setMessages((prev) =>
+      prev.map((m) => {
         if (m.id !== id) return m;
         const reactions = { ...m.reactions };
         const users = reactions[emoji] || [];
@@ -1190,15 +1077,13 @@ export default function DevChat() {
           reactions[emoji] = users.filter((u) => u !== "you");
         else reactions[emoji] = [...users, "you"];
         return { ...m, reactions };
-      });
-      return { ...prev, [roomJoined]: arr };
-    });
+      })
+    );
   };
 
   // Filtering + search
   const visibleMessages = useMemo(() => {
-    const list = messages[roomJoined] || [];
-    return list.filter((m) => {
+    return messages.filter((m) => {
       if (filter === "code" && m.type !== "code") return false;
       if (filter === "files" && m.type !== "file") return false;
       if (filter === "pinned" && !m.pinned) return false;
@@ -1210,161 +1095,92 @@ export default function DevChat() {
         return false;
       return true;
     });
-  }, [messages, roomJoined, filter, q]);
+  }, [messages, filter, q]);
 
   const openCodeModal = (code) => {
     setCodeModalContent(code);
     setShowCodeModal(true);
   };
 
-  // Get active typing users for current room
+  // Get active typing users
   const activeTypingUsers = useMemo(() => {
     return Object.keys(typingUsers).filter((userId) => typingUsers[userId]);
   }, [typingUsers]);
 
+  if (isLoading) {
+    return (
+      <div className="h-screen bg-gradient-to-br from-indigo-50 to-white p-4 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg font-semibold">Loading Team Chat...</div>
+          <div className="text-gray-500">Setting up your project workspace</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-screen bg-gradient-to-br from-indigo-50 to-white p-4 flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="text-lg font-semibold text-rose-600 mb-2">
+            Error Loading Chat
+          </div>
+          <div className="text-gray-500 mb-4">{error}</div>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!team) {
+    return (
+      <div className="h-screen bg-gradient-to-br from-indigo-50 to-white p-4 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg font-semibold text-rose-600">
+            Team Not Found
+          </div>
+          <div className="text-gray-500">
+            The requested team could not be loaded
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="h-screen bg-gradient-to-br from-indigo-50 to-white p-4">
+    <div className="max-h-screen">
       <div className="max-w-[1400px] mx-auto h-full grid grid-cols-12 gap-4">
-        {/* Sidebar */}
-        <aside className="col-span-3 bg-white rounded-2xl shadow p-3 flex flex-col">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold">DevChat</h3>
-            <div className="text-xs text-gray-500">Dev-first</div>
-          </div>
-
-          <div className="flex gap-2 mb-3">
-            <button
-              onClick={() => setModeView("private")}
-              className={classNames(
-                "px-3 py-1 rounded",
-                modeView === "private"
-                  ? "bg-indigo-600 text-white"
-                  : "bg-gray-100"
-              )}
-            >
-              Private
-            </button>
-            <button
-              onClick={() => setModeView("group")}
-              className={classNames(
-                "px-3 py-1 rounded",
-                modeView === "group"
-                  ? "bg-indigo-600 text-white"
-                  : "bg-gray-100"
-              )}
-            >
-              Groups
-            </button>
-          </div>
-
-          <div className="mb-3">
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search messages & files..."
-              className="w-full rounded-xl border px-3 py-2 text-sm"
-            />
-          </div>
-
-          <div className="flex gap-2 mb-3 text-xs">
-            {MESSAGE_FILTERS.map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={classNames(
-                  "px-2 py-1 rounded text-sm",
-                  filter === f ? "bg-indigo-600 text-white" : "bg-gray-100"
-                )}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex-1 overflow-y-auto">
-            {modeView === "group" ? (
-              <>
-                <div className="flex justify-between items-center mb-2">
-                  <h4 className="font-medium">Rooms</h4>
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => setShowJoinRoom(true)}
-                      className="text-xs p-1 bg-indigo-100 text-indigo-700 rounded"
-                    >
-                      Join
-                    </button>
-                    <button
-                      onClick={() => setShowCreateRoom(true)}
-                      className="text-xs p-1 bg-indigo-600 text-white rounded"
-                    >
-                      New
-                    </button>
-                  </div>
-                </div>
-                {chats.group.map((c) => (
-                  <div
-                    key={c.id}
-                    onClick={() => setActiveChatId(c.id)}
-                    className={classNames(
-                      "p-2 rounded cursor-pointer hover:bg-gray-50 flex items-center gap-3 mb-1",
-                      activeChatId === c.id ? "bg-indigo-50" : ""
-                    )}
-                  >
-                    <Avatar text={c.avatar} size="sm" />
-                    <div className="flex-1">
-                      <div className="font-medium">{c.name}</div>
-                      <div className="text-xs text-gray-500">
-                        {c.lastMessage || "No messages yet"}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </>
-            ) : (
-              <>
-                <h4 className="font-medium mb-2">Direct Messages</h4>
-                <div className="text-gray-500 text-sm p-2">
-                  Will be added soon
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="pt-3 border-t mt-3">
-            <div className="text-xs text-gray-500">
-              Tip: drag & drop files anywhere to attach
-            </div>
-          </div>
+        {/* Team Members Sidebar */}
+        <aside className="col-span-3">
+          <TeamMembersSidebar
+            team={team}
+            members={members}
+            currentUser={currentUser}
+            navigate={navigate}
+          />
         </aside>
 
-        {/* Main */}
+        {/* Main Chat Area */}
         <main className="col-span-9 bg-white rounded-2xl shadow flex flex-col overflow-hidden">
           {/* Header */}
           <div className="p-4 border-b flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {roomJoined && <Avatar text={activeChat?.avatar || "U"} />}
+              <Avatar text={team.title} />
               <div>
-                <div className="font-semibold">
-                  {activeChat?.name || "No chat selected"}
-                </div>
+                <div className="font-semibold">{team.title}</div>
                 <div className="text-xs text-gray-500">
-                  {roomJoined
-                    ? "Group chat"
-                    : "Select a chat to start messaging"}
+                  Team Chat • {members.length} members
                   {activeTypingUsers.length > 0 && " • Typing..."}
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              {roomJoined && (
-                <button
-                  onClick={handleLeaveRoom}
-                  className="px-3 py-1 text-sm bg-rose-100 text-rose-700 rounded-md"
-                >
-                  Leave Room
-                </button>
-              )}
               <IconBtn
                 title="Pinned filter"
                 onClick={() =>
@@ -1380,9 +1196,9 @@ export default function DevChat() {
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {visibleMessages.length === 0 ? (
               <div className="text-center text-gray-400 py-12">
-                {roomJoined || activeChatId
-                  ? "No messages yet. Start a conversation!"
-                  : "Select a chat to start messaging"}
+                {messages.length === 0
+                  ? "No messages yet. Start the conversation with your team!"
+                  : "No messages match your current filter"}
               </div>
             ) : (
               visibleMessages.map((m) => (
@@ -1400,23 +1216,9 @@ export default function DevChat() {
           </div>
 
           {/* Composer */}
-          {activeChatId && <Composer onSendMessage={handleSendMessage} />}
+          <Composer onSendMessage={handleSendMessage} />
         </main>
       </div>
-
-      {/* Modals */}
-      <CreateRoomModal
-        isOpen={showCreateRoom}
-        onClose={() => setShowCreateRoom(false)}
-        onCreateRoom={handleCreateRoom}
-      />
-
-      <JoinRoomModal
-        isOpen={showJoinRoom}
-        onClose={() => setShowJoinRoom(false)}
-        onJoinRoom={handleJoinRoom}
-        availableRooms={availableRooms}
-      />
 
       {/* Code Modal */}
       {showCodeModal && (

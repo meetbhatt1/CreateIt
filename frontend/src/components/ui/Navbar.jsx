@@ -55,7 +55,10 @@ export const Navbar = ({ heading = "🚀 CreateIt" }) => {
           </div>
 
           <div className="py-2 cursor-pointer transition-all duration-300 rounded-[10px] pl-2  hover:text-indigo-400 hover:bg-gray-100 hover:translate-x-1.5">
-            ⚙️ Settings
+            <button onClick={() => navigate("/dashboard")}>📊 Dashboard</button>
+          </div>
+          <div className="py-2 cursor-pointer transition-all duration-300 rounded-[10px] pl-2  hover:text-indigo-400 hover:bg-gray-100 hover:translate-x-1.5">
+            <button onClick={() => navigate("/settings")}>⚙️ Settings</button>
           </div>
           <div
             onClick={handleLogout}

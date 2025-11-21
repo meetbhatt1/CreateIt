@@ -28,6 +28,6 @@ router.get('/owner/requests', auth, getJoinRequests);
 router.post('/request/:requestId/respond', auth, respondToJoinRequest);
 router.post('/:teamId/join', auth, joinPublicTeam);
 router.get('/user/:id', getTeamsByUser);
-router.get('/:teamId', auth, getTeamDetails);
+router.get('/:teamId', getTeamDetails);
 
 export default router;

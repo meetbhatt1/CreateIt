@@ -3,6 +3,7 @@ import { getSocket } from "../../utils/socket";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../ui/UI_Components";
+import API from "../../utils/API";
 
 const EMOJIS = [
   "👍",
@@ -751,12 +752,9 @@ export default function TeamChat() {
         }
 
         // Fetch team details
-        const teamResponse = await axios.get(
-          `http://localhost:8000/api/team/${teamId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const teamResponse = await axios.get(`${API}/team/${teamId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         if (teamResponse.data) {
           const teamData = teamResponse.data;
@@ -952,7 +950,7 @@ export default function TeamChat() {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `http://localhost:8000/api/chat/rooms/${teamRoomSlug}/history`,
+        `${API}/chat/rooms/${teamRoomSlug}/history`,
         {
           headers: { Authorization: `Bearer ${token}` },
           params: { limit: 50 },

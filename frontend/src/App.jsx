@@ -29,8 +29,68 @@ import ProjectDetailPage from "./components/Project/ProjectDetailPage";
 import Settings from "./components/Settings/Settings";
 import Dashboard from "./components/Settings/Dashboard";
 
-const PrivateRoute = ({ isLoggedIn, children }) => {
-  return isLoggedIn ? children : <Navigate to="/auth" />;
+const PrivateRoute = ({ children }) => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const user = await localStorage.getItem("user");
+        if (user) {
+          const userObj = JSON.parse(user);
+          setIsLoggedIn(!!userObj?.email);
+        } else {
+          setIsLoggedIn(false);
+        }
+      } catch (error) {
+        console.error("Error checking auth:", error);
+        setIsLoggedIn(false);
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  if (checkingAuth) {
+    return <div>Loading...</div>; // Or a proper loading component
+  }
+
+  return isLoggedIn ? children : <Navigate to="/auth" replace />;
+};
+
+const PublicRoute = ({ children }) => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const user = await localStorage.getItem("user");
+        if (user) {
+          const userObj = JSON.parse(user);
+          setIsLoggedIn(!!userObj?.email);
+        } else {
+          setIsLoggedIn(false);
+        }
+      } catch (error) {
+        console.error("Error checking auth:", error);
+        setIsLoggedIn(false);
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  if (checkingAuth) {
+    return <div>Loading...</div>;
+  }
+
+  return !isLoggedIn ? children : <Navigate to="/" replace />;
 };
 
 const appRoutes = [
@@ -49,7 +109,7 @@ const appRoutes = [
   {
     path: "/auth",
     element: <AuthPage />,
-    authRequired: false,
+    authRequired: false, // Public route
     sidebar: "none",
   },
   {
@@ -170,15 +230,6 @@ const Layout = ({ children }) => {
 };
 
 const App = () => {
-  const isLoggedIn = useMemo(async () => {
-    const user = await localStorage.getItem("user");
-    return (await user?.email?.length) > 0;
-  }, []);
-
-  useEffect(() => {
-    console.log(isLoggedIn);
-  }, [isLoggedIn]);
-
   const [introSeen, setIntroSeen] = useState(true);
 
   useEffect(() => {
@@ -211,16 +262,14 @@ const App = () => {
                 path={path}
                 element={
                   authRequired ? (
-                    <PrivateRoute isLoggedIn={isLoggedIn}>
-                      {element}
-                    </PrivateRoute>
+                    <PrivateRoute>{element}</PrivateRoute>
                   ) : (
-                    element
+                    <PublicRoute>{element}</PublicRoute>
                   )
                 }
               />
             ))}
-            <Route path="*" element={<Navigate to="/" />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Layout>
       )}

@@ -11,11 +11,12 @@ export const LeftSidebar = () => {
   const currentPath = location.pathname;
 
   const user = JSON.parse(localStorage.getItem("user"));
+  console.log(user);
 
   useEffect(() => {
     const fetchTeams = async () => {
       try {
-        const res = await axios.get(`${API}/team/user/${user._id}`);
+        const res = await axios.get(`${API}/team/user/${user?._id}`);
         setTeamID(res?.data[0]?._id);
       } catch (err) {
         console.error("Error fetching teams:", err);

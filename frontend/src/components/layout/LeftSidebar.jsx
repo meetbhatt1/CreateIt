@@ -31,7 +31,6 @@ export const LeftSidebar = () => {
       href: `/team/${teamID || "6895ab36bc5ef279d41fc77f"}/dashboard`,
       label: "👥 Your Squad",
     },
-    { href: "/under-progress", label: "💻 Project Crew" },
     { href: "/project-dashboard", label: "⭐Your Contributions" },
     { href: "/mock-interview", label: "🎯 Mock Interviews" },
   ];

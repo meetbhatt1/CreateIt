@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Card } from "../ui/Card";
 import { SidebarMenuItem } from "../sidebar/SidebarMenuItem";
 import axios from "axios";
@@ -30,8 +30,6 @@ export const TeamSideBar = () => {
     { href: `/team/${teamId}/dashboard`, label: "Dashboard" },
     { href: `/my-team`, label: "Project" },
     { href: `/team/${teamId}/kanban`, label: "Tasks" },
-    { href: `/team/${teamId}/chat`, label: "Team Chat" },
-    { href: "/invitations", label: "📝 Your Requests" },
     { href: "/", label: "Back To Home" },
   ];
 

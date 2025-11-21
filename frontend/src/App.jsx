@@ -26,6 +26,8 @@ import TeamDetailsPage from "./components/Team/TeamDetailsPage";
 import IntroPage from "./Pages/IntroPage";
 import Chat from "./components/Chat/Chat";
 import ProjectDetailPage from "./components/Project/ProjectDetailPage";
+import Settings from "./components/Settings/Settings";
+import Dashboard from "./components/Settings/Dashboard";
 
 const PrivateRoute = ({ isLoggedIn, children }) => {
   return isLoggedIn ? children : <Navigate to="/auth" />;
@@ -37,6 +39,12 @@ const appRoutes = [
     element: <HomePage />,
     authRequired: true,
     sidebar: "left+right",
+  },
+  {
+    path: "/settings",
+    element: <Settings />,
+    authRequired: true,
+    sidebar: "none",
   },
   {
     path: "/auth",
@@ -63,6 +71,12 @@ const appRoutes = [
     sidebar: "team",
   },
   {
+    path: "/dashboard",
+    element: <Dashboard />,
+    authRequired: true,
+    sidebar: "none",
+  },
+  {
     path: "/under-progress",
     element: <UnderProgress />,
     authRequired: true,
@@ -84,13 +98,13 @@ const appRoutes = [
     path: "/team/:teamId/kanban",
     element: <KanbanBoard />,
     authRequired: true,
-    sidebar: "team",
+    sidebar: "none",
   },
   {
     path: "/team/:teamId/chat",
     element: <Chat />,
     authRequired: true,
-    sidebar: "team",
+    sidebar: "none",
   },
   {
     path: "/team/:teamId",

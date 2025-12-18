@@ -45,6 +45,19 @@ export const verifyOTP = createAsyncThunk(
     }
 );
 
+// Send OTP action (for initial signup)
+export const sendOTP = createAsyncThunk(
+    'auth/sendOTP',
+    async ({ email }, { rejectWithValue }) => {
+        try {
+            const response = await axios.post(`${API_BASE_URL}/send-otp`, { email });
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to send OTP');
+        }
+    }
+);
+
 // New resend OTP action
 export const resendOTP = createAsyncThunk(
     'auth/resendOTP',
@@ -172,6 +185,7 @@ const authSlice = createSlice({
             .addCase(verifyOTP.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.otpVerified = true;
+                state.otpSent = false; // Reset OTP sent state after verification
                 state.user = action.payload.user;
                 state.isAuthenticated = true;
                 state.error = null;
@@ -182,6 +196,22 @@ const authSlice = createSlice({
                 state.otpVerified = false;
             })
 
+            // Send OTP cases
+            .addCase(sendOTP.pending, (state) => {
+                state.isLoading = true;
+                state.error = null;
+            })
+            .addCase(sendOTP.fulfilled, (state) => {
+                state.isLoading = false;
+                state.otpSent = true;
+                state.error = null;
+            })
+            .addCase(sendOTP.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.payload;
+                state.otpSent = false;
+            })
+
             // Resend OTP cases
             .addCase(resendOTP.pending, (state) => {
                 state.isLoading = true;
@@ -189,6 +219,7 @@ const authSlice = createSlice({
             })
             .addCase(resendOTP.fulfilled, (state) => {
                 state.isLoading = false;
+                state.otpSent = true;
                 state.error = null;
             })
             .addCase(resendOTP.rejected, (state, action) => {

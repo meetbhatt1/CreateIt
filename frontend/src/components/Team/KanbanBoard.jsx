@@ -1,145 +1,158 @@
-// src/pages/KanbanBoard.jsx
+// src/components/Team/KanbanBoard.jsx
 import React, { useState, useEffect } from "react";
 import { Button } from "../ui/UI_Components";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import API from "../../utils/API";
-import { Users, Plus, ArrowLeft, Folder, Calendar, User } from "lucide-react";
-
-// Initial columns structure for new projects
-const initialColumns = {
-  todo: [],
-  inProgress: [],
-  review: [],
-  done: [],
-};
+import { ArrowLeft, ExternalLink } from "lucide-react";
 
 const teamMembers = ["John Smith", "Sarah Dev", "Alex Designer"];
 
 const KanbanBoard = () => {
   const navigate = useNavigate();
   const params = useParams();
-  const projectId = params.teamId;
-  const [projects, setProjects] = useState([]);
-  const [columns, setColumns] = useState(initialColumns);
+  const projectId = params.projectId;
+  const [columns, setColumns] = useState({
+    todo: [],
+    inProgress: [],
+    review: [],
+    done: [],
+  });
+
   const [draggedTask, setDraggedTask] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [editingStatus, setEditingStatus] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showProjectList, setShowProjectList] = useState(!projectId);
+  
+  // JIRA integration state
+  const [dataSource, setDataSource] = useState("createit"); // "createit" | "jira"
+  const [jiraConnected, setJiraConnected] = useState(false);
+  const [jiraProjects, setJiraProjects] = useState([]);
+  const [selectedJiraProject, setSelectedJiraProject] = useState(null);
+  const [jiraLoading, setJiraLoading] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user"));
 
-  // Fetch user's projects
-  const fetchProjects = async () => {
-    try {
-      setLoading(true);
-      const projectsRes = await axios.get(
-        `${API}/project/my-projects/${user._id}`,
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
-      if (projectsRes.status === 200) {
-        setProjects(projectsRes.data);
-      }
-    } catch (error) {
-      console.log("Error fetching projects:", error);
-    } finally {
-      setLoading(false);
+  // Redirect if no projectId
+  useEffect(() => {
+    if (!projectId) {
+      navigate("/my-team");
     }
-  };
+  }, [projectId, navigate]);
 
-  // Fetch specific project's kanban data
-  const fetchProjectData = async (id) => {
-    try {
-      setLoading(true);
-      // For now, we'll use localStorage. Later you can add kanban data to your Project model
-      const saved = localStorage.getItem(`kanban-${projectId}`);
-      if (saved) {
-        setColumns(JSON.parse(saved));
-      } else {
-        // Set some sample data for new projects
-        setColumns({
-          todo: [
-            {
-              id: "1",
-              title: "Welcome Task 🎉",
-              description:
-                "This is your first task. Drag me to different columns!",
-              priority: "medium",
-              assignee: teamMembers[0],
-              avatar: getAvatar(teamMembers[0]),
-              due: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-                .toISOString()
-                .split("T")[0],
-              xp: 25,
-            },
-          ],
-          inProgress: [],
-          review: [],
-          done: [],
-        });
-      }
-    } catch (error) {
-      console.log("Error fetching project data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Create new project
-  const handleCreateNewProject = async () => {
-    const projectName = prompt("Enter project name:");
-    if (!projectName) return;
-
-    const projectDescription =
-      prompt("Enter project description:") || "No description";
-
-    try {
-      const formData = new FormData();
-      formData.append("title", projectName);
-      formData.append("description", projectDescription);
-      formData.append("owner", user._id);
-
-      const newProjectRes = await axios.post(
-        `${API}/project/create`,
-        formData,
-        {
+  // Check JIRA connection status
+  useEffect(() => {
+    const checkJiraConnection = async () => {
+      try {
+        const res = await axios.get(`${API}/jira/connection`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "multipart/form-data",
           },
+        });
+        setJiraConnected(res.data.connected);
+        if (res.data.connected) {
+          // Fetch JIRA projects
+          const projectsRes = await axios.get(`${API}/jira/projects`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
+          setJiraProjects(projectsRes.data.projects || []);
         }
-      );
-
-      if (newProjectRes.status === 200 || newProjectRes.status === 201) {
-        fetchProjects(); // Refresh the list
-        // Navigate to the new project's kanban board
-        navigate(`/kanban/${newProjectRes.data._id}`);
+      } catch (err) {
+        console.error("Failed to check JIRA connection", err);
+        setJiraConnected(false);
       }
-    } catch (error) {
-      console.log("Error creating project:", error);
-      alert("Failed to create project. Please try again.");
+    };
+    checkJiraConnection();
+  }, []);
+
+  const fetchTasks = async (projectId) => {
+    if (!projectId) return;
+
+    try {
+      setLoading(true);
+      const res = await axios.get(`${API}/task/${projectId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      const grouped = {
+        todo: [],
+        inProgress: [],
+        review: [],
+        done: [],
+      };
+
+      res.data.forEach((task) => {
+        if (grouped[task.status]) {
+          grouped[task.status].push(task);
+        }
+      });
+
+      setColumns(grouped);
+    } catch (err) {
+      console.error("Failed to fetch tasks", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchJiraIssues = async (projectKey) => {
+    if (!projectKey) return;
+
+    try {
+      setJiraLoading(true);
+      const res = await axios.get(`${API}/jira/project/${projectKey}/issues`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      setColumns(res.data);
+    } catch (err) {
+      console.error("Failed to fetch JIRA issues", err);
+      alert("Failed to fetch JIRA issues. Please check your JIRA connection.");
+    } finally {
+      setJiraLoading(false);
     }
   };
 
   useEffect(() => {
-    if (projectId) {
-      fetchProjectData(projectId);
-      setShowProjectList(false);
-    } else {
-      fetchProjects();
-      setShowProjectList(true);
+    if (projectId && dataSource === "createit") {
+      fetchTasks(projectId);
+    } else if (dataSource === "jira" && selectedJiraProject) {
+      fetchJiraIssues(selectedJiraProject.key);
     }
-  }, [projectId]);
+  }, [projectId, dataSource, selectedJiraProject]);
 
-  useEffect(() => {
-    if (projectId) {
-      localStorage.setItem(`kanban-${projectId}`, JSON.stringify(columns));
+  const handleDataSourceChange = (source) => {
+    setDataSource(source);
+    if (source === "createit") {
+      setSelectedJiraProject(null);
+      if (projectId) {
+        fetchTasks(projectId);
+      }
     }
-  }, [columns, projectId]);
+  };
+
+  const handleJiraConnect = async () => {
+    try {
+      const res = await axios.get(`${API}/jira/oauth/initiate`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      // Redirect to Atlassian OAuth
+      window.location.href = res.data.authUrl;
+    } catch (err) {
+      console.error("Failed to initiate JIRA OAuth", err);
+      alert("Failed to connect JIRA. Please try again.");
+    }
+  };
+
 
   // -------------------------------
   // 🚀 Kanban Functions
@@ -148,51 +161,97 @@ const KanbanBoard = () => {
     setDraggedTask({ ...task, from });
   };
 
-  const handleDrop = (e, to) => {
+  const handleDrop = async (e, to) => {
     e.preventDefault();
     if (!draggedTask || draggedTask.from === to) return;
 
-    const updated = { ...columns };
-    updated[draggedTask.from] = updated[draggedTask.from].filter(
-      (t) => t.id !== draggedTask.id
-    );
-    updated[to] = [...updated[to], draggedTask];
-    setColumns(updated);
+    // Disable drag-drop for JIRA tasks in Phase-1
+    if (draggedTask.isJira) {
+      alert("JIRA tasks are read-only. Changes must be made in JIRA.");
+      setDraggedTask(null);
+      return;
+    }
+
+    try {
+      await axios.put(
+        `${API}/task/${draggedTask._id}`,
+        { status: to },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (dataSource === "createit") {
+        fetchTasks(projectId); // refresh board
+      }
+    } catch (err) {
+      console.error("Failed to update status", err);
+    }
+
     setDraggedTask(null);
   };
 
-  const addTask = (status) => {
-    const today = new Date();
-    const defaultDue = new Date(today.setDate(today.getDate() + 7))
-      .toISOString()
-      .split("T")[0];
 
-    const newTask = {
-      id: Date.now().toString(),
-      title: "New Task ✨",
-      description: "Click edit to add details...",
-      priority: "medium",
-      assignee: teamMembers[0],
-      avatar: getAvatar(teamMembers[0]),
-      due: defaultDue,
-      xp: 10,
-    };
-    setColumns((prev) => ({
-      ...prev,
-      [status]: [...prev[status], newTask],
-    }));
-  };
+  const addTask = async (status) => {
+    try {
+      const res = await axios.post(
+        `${API}/task`,
+        {
+          title: "New Task ✨",
+          description: "Edit me",
+          priority: "medium",
+          status,
+          due: new Date(),
+          xp: 10,
+          assignee: user.fullName,
+          projectId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
-  const deleteTask = (status, id) => {
-    if (window.confirm("Are you sure you want to delete this task?")) {
       setColumns((prev) => ({
         ...prev,
-        [status]: prev[status].filter((t) => t.id !== id),
+        [status]: [...prev[status], res.data],
       }));
+    } catch (err) {
+      console.error("Failed to create task", err);
     }
   };
 
+
+  const deleteTask = async (status, id, task) => {
+    // Disable deletion for JIRA tasks in Phase-1
+    if (task?.isJira) {
+      alert("JIRA tasks are read-only. Please delete in JIRA.");
+      return;
+    }
+
+    if (!window.confirm("Delete task?")) return;
+
+    await axios.delete(`${API}/task/${id}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+
+    if (dataSource === "createit") {
+      fetchTasks(projectId);
+    }
+  };
+
+
   const openEditModal = (status, task) => {
+    // Disable editing for JIRA tasks in Phase-1
+    if (task.isJira) {
+      alert("JIRA tasks are read-only. Please edit in JIRA.");
+      return;
+    }
     setEditingTask({ ...task });
     setEditingStatus(status);
     setIsModalOpen(true);
@@ -204,21 +263,36 @@ const KanbanBoard = () => {
     setEditingStatus(null);
   };
 
-  const saveTask = () => {
+  const saveTask = async () => {
     if (!editingTask.title.trim()) {
       alert("Task title is required!");
       return;
     }
 
-    setColumns((prev) => ({
-      ...prev,
-      [editingStatus]: prev[editingStatus].map((t) =>
-        t.id === editingTask.id
-          ? { ...editingTask, avatar: getAvatar(editingTask.assignee) }
-          : t
-      ),
-    }));
-    closeModal();
+    try {
+      await axios.put(
+        `${API}/task/${editingTask._id}`,
+        {
+          title: editingTask.title,
+          description: editingTask.description,
+          priority: editingTask.priority,
+          xp: editingTask.xp,
+          assignee: editingTask.assignee,
+          due: editingTask.due,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      fetchTasks(projectId);
+      closeModal();
+    } catch (err) {
+      console.error("Failed to update task", err);
+      alert("Failed to update task. Please try again.");
+    }
   };
 
   const sortTasks = (status, by = "priority") => {
@@ -253,130 +327,8 @@ const KanbanBoard = () => {
     return colors[priority] || colors.medium;
   };
 
-  // -------------------------------
-  // 🏠 Project List View
-  // -------------------------------
-  if (showProjectList) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-4">
-        <div className="container mx-auto px-4 py-6 max-w-6xl">
-          {/* Header */}
-          <div className="mb-8 text-center">
-            <h1 className="font-[fredoka] text-4xl md:text-5xl font-bold text-purple-600 mb-4">
-              📋 My Projects
-            </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Organize your work with Kanban boards. Select a project to start
-              managing tasks!
-            </p>
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-between items-center mb-8">
-            <Button
-              variant="secondary"
-              onClick={() => navigate("/")}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft size={16} />
-              Back to Home
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleCreateNewProject}
-              className="flex items-center gap-2"
-            >
-              <Plus size={20} />
-              New Project
-            </Button>
-          </div>
-
-          {/* Projects Grid */}
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-            </div>
-          ) : projects.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects.map((project) => (
-                <div
-                  key={project._id}
-                  className="bg-white rounded-xl p-6 shadow-lg border border-purple-200 hover:shadow-xl transition-all cursor-pointer transform hover:-translate-y-1"
-                  onClick={() => navigate(`/kanban/${project._id}`)}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-purple-100 p-2 rounded-lg">
-                        <Folder className="text-purple-600" size={24} />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-xl text-gray-800 line-clamp-1">
-                          {project.title}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          {project.team
-                            ? `Team: ${project.team.title}`
-                            : "Personal Project"}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="bg-green-100 text-green-600 text-xs font-semibold px-2 py-1 rounded-full">
-                      Active
-                    </span>
-                  </div>
-
-                  <p className="text-gray-600 mb-4 line-clamp-2 text-sm">
-                    {project.description || "No description provided"}
-                  </p>
-
-                  <div className="flex items-center justify-between text-sm text-gray-500">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1">
-                        <Calendar size={14} />
-                        <span>
-                          {project.createdAt
-                            ? new Date(project.createdAt).toLocaleDateString()
-                            : "New"}
-                        </span>
-                      </div>
-                      {project.owner && (
-                        <div className="flex items-center gap-1">
-                          <User size={14} />
-                          <span>You</span>
-                        </div>
-                      )}
-                    </div>
-                    <span className="bg-gray-100 px-2 py-1 rounded text-xs">
-                      {project.category || "General"}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-purple-200">
-              <div className="mx-auto bg-purple-100 p-6 rounded-full w-20 h-20 flex items-center justify-center mb-6">
-                <Folder className="text-purple-600" size={32} />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-3">
-                No Projects Yet
-              </h3>
-              <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                Create your first project to start organizing tasks with a
-                beautiful Kanban board!
-              </p>
-              <Button
-                variant="primary"
-                onClick={handleCreateNewProject}
-                size="lg"
-              >
-                Create Your First Project
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+  if (!projectId) {
+    return null; // Will redirect via useEffect
   }
 
   // -------------------------------
@@ -390,11 +342,11 @@ const KanbanBoard = () => {
           <div className="flex items-center justify-between w-[90%]">
             <Button
               variant="secondary"
-              onClick={() => navigate("/my-team")}
+              onClick={() => navigate(-1)}
               className="flex items-center max-w-[20%]"
             >
               <ArrowLeft size={16} />
-              Back to Projects
+              Back
             </Button>
             <div className="w-[30%]" />
             <div className="w-[50%]">
@@ -406,9 +358,68 @@ const KanbanBoard = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
-            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-sm text-gray-600">Auto-saved</span>
+          <div className="flex items-center gap-4">
+            {/* Data Source Toggle */}
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
+              <span className="text-sm text-gray-600 font-medium">Data Source:</span>
+              <button
+                onClick={() => handleDataSourceChange("createit")}
+                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                  dataSource === "createit"
+                    ? "bg-purple-500 text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                CreateIt
+              </button>
+              {jiraConnected && (
+                <button
+                  onClick={() => handleDataSourceChange("jira")}
+                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                    dataSource === "jira"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  JIRA
+                </button>
+              )}
+              {!jiraConnected && (
+                <button
+                  onClick={handleJiraConnect}
+                  className="px-3 py-1 rounded text-sm font-medium bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
+                  title="Connect JIRA"
+                >
+                  + Connect JIRA
+                </button>
+              )}
+            </div>
+            
+            {/* JIRA Project Selector */}
+            {dataSource === "jira" && jiraProjects.length > 0 && (
+              <select
+                value={selectedJiraProject?.key || ""}
+                onChange={(e) => {
+                  const project = jiraProjects.find(p => p.key === e.target.value);
+                  setSelectedJiraProject(project);
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="">Select JIRA Project</option>
+                {jiraProjects.map((project) => (
+                  <option key={project.id} value={project.key}>
+                    {project.name} ({project.key})
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {dataSource === "createit" && (
+              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-gray-600">Auto-saved</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -447,13 +458,15 @@ const KanbanBoard = () => {
                   <div className="text-lg">{tasks.length}</div>
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => addTask(status)}
-                    className="bg-green-500 hover:bg-green-600"
-                  >
-                    +
-                  </Button>
+                  {dataSource === "createit" && (
+                    <Button
+                      size="sm"
+                      onClick={() => addTask(status)}
+                      className="bg-green-500 hover:bg-green-600"
+                    >
+                      +
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     onClick={() => sortTasks(status, "priority")}
@@ -468,30 +481,54 @@ const KanbanBoard = () => {
               <div className="space-y-4">
                 {tasks.map((task) => (
                   <div
-                    key={task.id}
-                    draggable
-                    onDragStart={() => handleDragStart(task, status)}
-                    className="bg-gradient-to-br from-white to-gray-50 border border-gray-300 rounded-xl p-4 shadow-sm cursor-grab hover:shadow-md transition-all active:cursor-grabbing"
+                    key={task._id || task.id}
+                    draggable={!task.isJira}
+                    onDragStart={() => !task.isJira && handleDragStart(task, status)}
+                    className={`bg-gradient-to-br from-white to-gray-50 border border-gray-300 rounded-xl p-4 shadow-sm transition-all ${
+                      task.isJira 
+                        ? "cursor-default opacity-95" 
+                        : "cursor-grab hover:shadow-md active:cursor-grabbing"
+                    }`}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div className="font-bold text-lg text-gray-800 flex-1 pr-2">
                         {task.title}
+                        {task.isJira && task.jiraIssueKey && (
+                          <span className="ml-2 text-xs text-blue-600 font-normal">
+                            ({task.jiraIssueKey})
+                          </span>
+                        )}
                       </div>
                       <div className="flex gap-1">
-                        <button
-                          onClick={() => openEditModal(status, task)}
-                          className="text-blue-500 hover:text-blue-700 transition-colors"
-                          title="Edit task"
-                        >
-                          ✎
-                        </button>
-                        <button
-                          onClick={() => deleteTask(status, task.id)}
-                          className="text-red-500 hover:text-red-700 transition-colors"
-                          title="Delete task"
-                        >
-                          ✕
-                        </button>
+                        {!task.isJira && (
+                          <>
+                            <button
+                              onClick={() => openEditModal(status, task)}
+                              className="text-blue-500 hover:text-blue-700 transition-colors"
+                              title="Edit task"
+                            >
+                              ✎
+                            </button>
+                            <button
+                              onClick={() => deleteTask(status, task._id || task.id, task)}
+                              className="text-red-500 hover:text-red-700 transition-colors"
+                              title="Delete task"
+                            >
+                              ✕
+                            </button>
+                          </>
+                        )}
+                        {task.isJira && task.jiraUrl && (
+                          <a
+                            href={task.jiraUrl.replace('/rest/api/3/issue/', '/browse/')}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:text-blue-700 transition-colors"
+                            title="Open in JIRA"
+                          >
+                            <ExternalLink size={16} />
+                          </a>
+                        )}
                       </div>
                     </div>
 
@@ -507,23 +544,32 @@ const KanbanBoard = () => {
                       >
                         {task.priority}
                       </span>
-                      <div className="text-sm font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
-                        +{task.xp} XP
-                      </div>
+                      {!task.isJira && (
+                        <div className="text-sm font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
+                          +{task.xp || 0} XP
+                        </div>
+                      )}
+                      {task.isJira && (
+                        <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                          JIRA
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex justify-between items-center pt-3 border-t border-dashed border-gray-300">
                       <div className="flex items-center gap-2">
                         <div className="bg-indigo-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
-                          {task.avatar}
+                          {task.avatar || getAvatar(task.assignee || "U")}
                         </div>
                         <span className="text-sm text-gray-700">
-                          {task.assignee}
+                          {task.assignee || "Unassigned"}
                         </span>
                       </div>
-                      <div className="text-xs text-purple-600 font-medium flex items-center gap-1">
-                        📅 {new Date(task.due).toLocaleDateString()}
-                      </div>
+                      {task.due && (
+                        <div className="text-xs text-purple-600 font-medium flex items-center gap-1">
+                          📅 {new Date(task.due).toLocaleDateString()}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -531,14 +577,22 @@ const KanbanBoard = () => {
                 {tasks.length === 0 && (
                   <div className="text-center py-8 text-gray-400">
                     <div className="text-4xl mb-2">📭</div>
-                    <p className="text-sm">No tasks yet</p>
-                    <Button
-                      size="sm"
-                      onClick={() => addTask(status)}
-                      className="mt-2 bg-gray-100 hover:bg-gray-200 text-gray-600"
-                    >
-                      + Add First Task
-                    </Button>
+                    <p className="text-sm">
+                      {dataSource === "jira" 
+                        ? selectedJiraProject 
+                          ? "No JIRA issues in this status"
+                          : "Select a JIRA project to view issues"
+                        : "No tasks yet"}
+                    </p>
+                    {dataSource === "createit" && (
+                      <Button
+                        size="sm"
+                        onClick={() => addTask(status)}
+                        className="mt-2 bg-gray-100 hover:bg-gray-200 text-gray-600"
+                      >
+                        + Add First Task
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>

@@ -27,10 +27,9 @@ export const TeamSideBar = () => {
   const navigate = useNavigate();
 
   const menuItems = [
-    { href: `/team/${teamId}/dashboard`, label: "Dashboard" },
-    { href: `/my-team`, label: "Project" },
-    { href: `/team/${teamId}/kanban`, label: "Tasks" },
-    { href: "/", label: "Back To Home" },
+    { href: `/team/${teamId}/dashboard`, label: "Team Dashboard" },
+    { href: `/my-team`, label: "My Teams" },
+    { href: "/", label: "Home" },
   ];
 
   return (

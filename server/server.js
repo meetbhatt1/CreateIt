@@ -8,6 +8,7 @@ import ProjectRoutes from './routes/ProjectRoutes.js'
 import TeamRoutes from './routes/TeamRoutes.js'
 import TaskRoutes from './routes/TaskRoutes.js'
 import ChatRoutes from './routes/ChatRoutes.js'
+import JiraRoutes from './routes/JiraRoutes.js'
 import ChatMessage from './models/ChatMessage.js'
 import ChatRoom from './models/ChatRoom.js'
 import { createSocketAuthMiddleware } from './middleware/SocketAuth.js'
@@ -40,6 +41,7 @@ app.use('/api/projects', ProjectRoutes)
 app.use('/api/team', TeamRoutes)
 app.use('/api/task', TaskRoutes)
 app.use('/api/chat', ChatRoutes)
+app.use('/api/jira', JiraRoutes)
 
 // ✅ Create HTTP server
 const httpServer = createServer(app)

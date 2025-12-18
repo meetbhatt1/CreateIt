@@ -20,10 +20,17 @@ export function createSocketAuthMiddleware(io) {
             const decoded = jwt.verify(token, secret)
 
             // ✅ Normalize user object
-            socket.user = {
-                ...decoded,
-                id: decoded.id || decoded._id,
+            const userId = decoded._id || decoded.id || decoded.userId;
+
+            if (!userId) {
+                return next(new Error("Unauthorized: Invalid token payload"));
             }
+
+            socket.user = {
+                id: userId,
+                email: decoded.email
+            };
+
 
             return next()
         } catch (err) {

@@ -64,11 +64,10 @@ const PersonalDetailsStep = ({
             key={emoji}
             type="button"
             onClick={() => handleEmojiSelect(emoji)}
-            className={`text-3xl p-2 rounded-2xl transition-all duration-300 hover:scale-110 ${
-              selectedEmoji === emoji
-                ? "bg-purple-200 scale-110"
-                : "hover:bg-gray-100"
-            }`}
+            className={`text-3xl p-2 rounded-2xl transition-all duration-300 hover:scale-110 ${selectedEmoji === emoji
+              ? "bg-purple-200 scale-110"
+              : "hover:bg-gray-100"
+              }`}
           >
             {emoji}
           </button>
@@ -77,33 +76,33 @@ const PersonalDetailsStep = ({
     </div>
 
     <input
-      className="input"
+      className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
       placeholder="Full Name 📝"
       value={fullName}
       onChange={(e) => setFullName(e.target.value)}
     />
     <input
-      className="input"
+      className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
       placeholder="Email Address 📧"
       value={email}
       onChange={(e) => setEmail(e.target.value)}
       type="email"
     />
     <input
-      className="input"
+      className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
       placeholder="Phone Number 📱"
       value={phone}
       onChange={(e) => setPhone(e.target.value)}
     />
     <input
-      className="input"
+      className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
       type="date"
       placeholder="Date of Birth"
       value={formatDateForInput(dob)}
       onChange={(e) => setDOB(e.target.value)}
     />
     <input
-      className="input"
+      className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
       placeholder="Create Password 🔒"
       value={password}
       onChange={(e) => setPassword(e.target.value)}
@@ -126,7 +125,7 @@ const EducationStep = ({
     </h3>
 
     <input
-      className="input"
+      className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
       placeholder="College/University Name 🏫"
       value={collegeName}
       onChange={(e) => setcollegeName(e.target.value)}
@@ -146,7 +145,7 @@ const EducationStep = ({
     />
 
     <input
-      className="input"
+      className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
       type="number"
       placeholder="Current Semester 📚"
       min="1"
@@ -191,7 +190,7 @@ const ProfilingStep = ({
     />
 
     <input
-      className="input"
+      className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
       type="text"
       placeholder="Past Projects (comma separated) 🛠️"
       value={pastProjects}
@@ -206,7 +205,7 @@ const ProfilingStep = ({
     />
 
     <input
-      className="input"
+      className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
       type="text"
       placeholder="GitHub Profile (Optional)"
       value={github}
@@ -214,7 +213,7 @@ const ProfilingStep = ({
     />
 
     <input
-      className="input"
+      className="w-full p-4 border-3 border-purple-200 rounded-2xl text-lg font-medium focus:border-purple-500 focus:outline-none transition-all duration-300 focus:scale-105"
       type="text"
       placeholder="LinkedIn Profile (Optional)"
       value={linkedin}
@@ -283,6 +282,7 @@ const AuthPage = () => {
     }
     return () => clearInterval(interval);
   }, [otpTimer]);
+
   useEffect(() => {
     if (error) {
       setModalContent({
@@ -295,30 +295,60 @@ const AuthPage = () => {
   }, [error]);
 
   useEffect(() => {
-    if (otpSent) {
+    if (otpSent && !showOTP) {
       setShowOTP(true);
       setOtpTimer(OTP_EXPIRY_TIME);
       signupDataRef.current.email = email;
     }
-  }, [otpSent, email]);
+  }, [otpSent, email, showOTP]);
 
+  // Fixed authentication check
   useEffect(() => {
-    if (otpVerified && isAuthenticated && !hasNavigatedRef.current) {
-      const token = localStorage.getItem("token");
-      const user = localStorage.getItem("user");
+    const checkAuthAndRedirect = async () => {
+      if (otpVerified && !hasNavigatedRef.current) {
+        try {
+          // Check if user is actually authenticated
+          const token = localStorage.getItem("token");
+          const userStr = localStorage.getItem("user");
 
-      if (token && user) {
-        hasNavigatedRef.current = true;
-
-        setModalContent({
-          title: "Success! ✅",
-          message: "OTP Verified Successfully.",
-          icon: "✅",
-        });
-        setShowModal(true);
+          if (token && userStr) {
+            const user = JSON.parse(userStr);
+            if (user?.email) {
+              hasNavigatedRef.current = true;
+              // Don't show modal here, it's already shown in handleOTPSubmit
+              // Just prepare for redirect
+            }
+          }
+        } catch (error) {
+          console.error("Error checking auth status:", error);
+        }
       }
-    }
+    };
+
+    checkAuthAndRedirect();
   }, [otpVerified, isAuthenticated]);
+
+  // Check if user is already logged in on component mount
+  useEffect(() => {
+    const checkExistingAuth = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const userStr = localStorage.getItem("user");
+
+        if (token && userStr) {
+          const user = JSON.parse(userStr);
+          if (user?.email) {
+            // User is already logged in, redirect to home
+            navigate("/", { replace: true });
+          }
+        }
+      } catch (error) {
+        console.error("Error checking existing auth:", error);
+      }
+    };
+
+    checkExistingAuth();
+  }, [navigate]);
 
   // Handlers
   const handleLoginChange = useCallback((e) => {
@@ -336,16 +366,22 @@ const AuthPage = () => {
   const handleLogin = useCallback(
     async (e) => {
       e.preventDefault();
-      console.log(loginDataRef.current);
-      const { payload } = await dispatch(loginUser(loginDataRef.current));
-      console.log("LOGIN PAYLOAD: ", payload);
-      if (payload !== "Login failed") {
-        setModalContent({
-          title: "Success! ✨",
-          message: payload.message,
-          icon: "✨",
-        });
-        setShowModal(true);
+      console.log("Login attempt:", loginDataRef.current);
+
+      try {
+        const { payload } = await dispatch(loginUser(loginDataRef.current));
+        console.log("LOGIN PAYLOAD: ", payload);
+
+        if (payload && payload !== "Login failed") {
+          setModalContent({
+            title: "Success! ✨",
+            message: payload.message || "Login successful!",
+            icon: "✨",
+          });
+          setShowModal(true);
+        }
+      } catch (error) {
+        console.error("Login error:", error);
       }
     },
     [dispatch]
@@ -375,20 +411,35 @@ const AuthPage = () => {
       };
 
       signupDataRef.current.email = email;
-      console.log(signupData);
+      console.log("Signup data:", signupData);
+
       const response = await axios.post(`${AUTH.SIGNUP}`, signupData);
-      console.log(response);
-      if (response?.status == "201") {
+      console.log("Signup response:", response);
+
+      if (response?.status === 201) {
+        // OTP is automatically sent by backend during signup
+        // Show OTP input screen
         setModalContent({
           title: "Success! ✨",
-          message: response?.data?.message,
+          message: response?.data?.message || "Account created successfully! Check your email for verification code.",
           icon: "✨",
         });
         setShowModal(true);
         setShowOTP(true);
+        setOtpTimer(OTP_EXPIRY_TIME);
+        setOtp(""); // Clear any previous OTP
       }
     } catch (error) {
-      console.log("Error Signing Up: ", error);
+      console.error("Error Signing Up: ", error);
+      const errorMessage = error.response?.data?.message ||
+        error.response?.data?.errors?.join(", ") ||
+        "Signup failed. Please try again.";
+      setModalContent({
+        title: "Error! 😬",
+        message: errorMessage,
+        icon: "😬",
+      });
+      setShowModal(true);
     }
   };
 
@@ -396,21 +447,56 @@ const AuthPage = () => {
     async (e) => {
       e.preventDefault();
       if (otp.length === 6) {
-        dispatch(
-          verifyOTP({
-            email: signupDataRef.current.email,
-            otp: otp,
-          })
-        );
+        try {
+          const result = await dispatch(
+            verifyOTP({
+              email: signupDataRef.current.email,
+              otp: otp,
+            })
+          ).unwrap();
+
+          // Show success message
+          setModalContent({
+            title: "Success! ✅",
+            message: result.message || "Email verified successfully!",
+            icon: "✅",
+          });
+          setShowModal(true);
+        } catch (error) {
+          console.error("OTP verification error:", error);
+          setModalContent({
+            title: "Error! 😬",
+            message: error || "Invalid or expired OTP. Please try again.",
+            icon: "😬",
+          });
+          setShowModal(true);
+          setOtp(""); // Clear OTP on error
+        }
       }
     },
     [dispatch, otp]
   );
 
-  const handleResendOTP = useCallback(() => {
+  const handleResendOTP = useCallback(async () => {
     if (otpTimer === 0) {
-      dispatch(resendOTP({ email: signupDataRef.current.email }));
-      setOtpTimer(OTP_EXPIRY_TIME);
+      try {
+        await dispatch(resendOTP({ email: signupDataRef.current.email })).unwrap();
+        setOtpTimer(OTP_EXPIRY_TIME);
+        setOtp(""); // Clear current OTP
+        setModalContent({
+          title: "OTP Sent! 📧",
+          message: "A new verification code has been sent to your email.",
+          icon: "📧",
+        });
+        setShowModal(true);
+      } catch (error) {
+        setModalContent({
+          title: "Error! 😬",
+          message: error || "Failed to resend OTP. Please try again.",
+          icon: "😬",
+        });
+        setShowModal(true);
+      }
     }
   }, [dispatch, otpTimer]);
 
@@ -432,22 +518,55 @@ const AuthPage = () => {
     setShowModal(false);
     dispatch(clearError());
 
-    // Start loader before redirect
-    setLoadingRedirect(true);
-
-    // Small delay so loader is visible
-    const interval = setInterval(() => {
-      const path = localStorage.getItem("pathToGo");
+    // Check if user is authenticated and redirect
+    const checkAuthAndRedirect = () => {
       const token = localStorage.getItem("token");
-      const user = localStorage.getItem("user");
+      const userStr = localStorage.getItem("user");
 
-      if (path && token && user) {
-        clearInterval(interval);
-        navigate(path, { replace: true });
-        setLoadingRedirect(false);
+      if (token && userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          if (user?.email) {
+            setLoadingRedirect(true);
+            // Reset signup form if coming from successful signup
+            if (otpVerified) {
+              setFullName("");
+              setEmail("");
+              setPhone("");
+              setPassword("");
+              setDOB("");
+              setprofileImage(null);
+              setcollegeName("");
+              setdegreeName("");
+              setcurrentSemester("");
+              setpreferredLanguage([]);
+              setpastProjects("");
+              setpurpose("");
+              setgithub("");
+              setlinkedin("");
+              setSelectedEmoji("😎");
+              setCurrentStep(1);
+              setShowOTP(false);
+              setOtp("");
+              setOtpTimer(0);
+            }
+            // Get the intended path or default to home
+            const intendedPath = localStorage.getItem("pathToGo") || "/";
+            localStorage.removeItem("pathToGo"); // Clean up
+            navigate(intendedPath, { replace: true });
+            return;
+          }
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+        }
       }
-    }, 1000);
-  }, [dispatch, navigate]);
+
+      // If not authenticated, stay on auth page
+      setLoadingRedirect(false);
+    };
+
+    checkAuthAndRedirect();
+  }, [dispatch, navigate, otpVerified]);
 
   // Helper function
   const formatTime = (seconds) => {
@@ -478,7 +597,7 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-purple-50 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md relative overflow-hidden">
         {/* Header */}
         <div className="text-center mb-8">
@@ -489,8 +608,8 @@ const AuthPage = () => {
             {showOTP
               ? "Almost there! 🎯"
               : isLogin
-              ? "Welcome back! 👋"
-              : "Join our community! 🎉"}
+                ? "Welcome back! 👋"
+                : "Join our community! 🎉"}
           </p>
         </div>
 
@@ -509,7 +628,6 @@ const AuthPage = () => {
 
             <form onSubmit={handleOTPSubmit}>
               <input
-                className="input"
                 type="text"
                 value={otp}
                 onChange={(e) =>
@@ -524,11 +642,10 @@ const AuthPage = () => {
               <button
                 type="submit"
                 disabled={otp.length !== 6 || isLoading}
-                className={`w-full mt-4 py-4 bg-purple-500 text-white rounded-2xl font-bold text-lg transition-all duration-300 hover:bg-purple-600 hover:scale-105 ${
-                  otp.length !== 6 || isLoading
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
-                }`}
+                className={`w-full mt-4 py-4 bg-purple-500 text-white rounded-2xl font-bold text-lg transition-all duration-300 hover:bg-purple-600 hover:scale-105 ${otp.length !== 6 || isLoading
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+                  }`}
               >
                 {isLoading ? "Verifying... ⏳" : "Verify & Continue 🚀"}
               </button>
@@ -537,16 +654,32 @@ const AuthPage = () => {
             <div className="text-center">
               {otpTimer > 0 ? (
                 <p className="text-gray-500">
-                  Sending OTP : {formatTime(otpTimer)}
+                  Resend OTP in: {formatTime(otpTimer)}
                 </p>
               ) : (
                 <button
                   onClick={handleResendOTP}
-                  className="text-purple-500 font-bold hover:text-purple-600 transition-colors"
+                  disabled={isLoading}
+                  className={`text-purple-500 font-bold hover:text-purple-600 transition-colors ${isLoading ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
                 >
-                  Send OTP 🔄
+                  {isLoading ? "Sending... ⏳" : "Resend OTP 🔄"}
                 </button>
               )}
+            </div>
+
+            <div className="text-center mt-4">
+              <button
+                onClick={() => {
+                  setShowOTP(false);
+                  setOtp("");
+                  setOtpTimer(0);
+                  setIsLogin(true);
+                }}
+                className="text-gray-500 text-sm hover:text-gray-700 transition-colors"
+              >
+                ← Back to Login
+              </button>
             </div>
           </div>
         ) : (
@@ -560,11 +693,10 @@ const AuthPage = () => {
                     setIsLogin(!i);
                     setCurrentStep(1);
                   }}
-                  className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all duration-300 ${
-                    isLogin === !i
-                      ? "bg-purple-500 text-white shadow-lg scale-105"
-                      : "text-gray-600 hover:bg-gray-200"
-                  }`}
+                  className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all duration-300 ${isLogin === !i
+                    ? "bg-purple-500 text-white shadow-lg scale-105"
+                    : "text-gray-600 hover:bg-gray-200"
+                    }`}
                 >
                   {text}
                 </button>
@@ -576,7 +708,6 @@ const AuthPage = () => {
               <form onSubmit={handleLogin} className="space-y-6">
                 {["email", "password"].map((field) => (
                   <input
-                    className="input"
                     key={field}
                     type={field === "email" ? "email" : "password"}
                     name={field}
@@ -592,9 +723,8 @@ const AuthPage = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`w-full py-4 bg-purple-500 text-white rounded-2xl font-bold text-lg transition-all duration-300 hover:bg-purple-600 hover:scale-105 ${
-                    isLoading ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
+                  className={`w-full py-4 bg-purple-500 text-white rounded-2xl font-bold text-lg transition-all duration-300 hover:bg-purple-600 hover:scale-105 ${isLoading ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
                 >
                   {isLoading ? "Logging in... ⏳" : "Login & Code! 🚀"}
                 </button>
@@ -606,9 +736,8 @@ const AuthPage = () => {
                   {[1, 2, 3].map((step) => (
                     <div
                       key={step}
-                      className={`w-3 h-3 rounded-full transition-all duration-300 mx-1 ${
-                        step <= currentStep ? "bg-purple-500" : "bg-gray-300"
-                      }`}
+                      className={`w-3 h-3 rounded-full transition-all duration-300 mx-1 ${step <= currentStep ? "bg-purple-500" : "bg-gray-300"
+                        }`}
                     />
                   ))}
                 </div>
@@ -681,9 +810,8 @@ const AuthPage = () => {
                     <button
                       onClick={handleSignup}
                       disabled={isLoading}
-                      className={`ml-auto px-6 py-3 bg-green-500 text-white rounded-2xl font-bold hover:bg-green-600 transition-all duration-300 hover:scale-105 ${
-                        isLoading ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
+                      className={`ml-auto px-6 py-3 bg-green-500 text-white rounded-2xl font-bold hover:bg-green-600 transition-all duration-300 hover:scale-105 ${isLoading ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
                     >
                       {isLoading ? "Creating Account... ⏳" : "Join Now! 🎉"}
                     </button>

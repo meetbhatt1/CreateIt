@@ -55,7 +55,7 @@ export const getAllProjects = async (req, res) => {
     }
 };
 
-// Get My Projects (Owned or Member)
+// Get My Projects (Owned or Member) - workspace view (in-progress only)
 export const getMyProjects = async (req, res) => {
     try {
         const userId = req.params.id;
@@ -64,10 +64,28 @@ export const getMyProjects = async (req, res) => {
             $or: [
                 { owner: userId },
                 { 'members.user': userId }
-            ]
-        }).populate('owner', 'fullName');
+            ],
+            status: 'in-progress'
+        }).populate('owner', 'fullName').populate('team');
 
         res.json({ success: true, projects: myProjects });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// Get Public Completed Projects (for homepage)
+export const getPublicCompletedProjects = async (req, res) => {
+    try {
+        const projects = await Project.find({
+            status: 'completed',
+            visibility: 'public'
+        })
+        .populate('owner', 'fullName email')
+        .populate('team')
+        .sort({ updatedAt: -1 });
+
+        res.json({ success: true, projects });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }

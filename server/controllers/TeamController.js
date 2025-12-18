@@ -5,19 +5,43 @@ import JoinRequest from '../models/JoinRequests.js';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
 import { formatDistanceToNow } from 'date-fns';
+import Project from "../models/projectModel.js";
 
 // Helper function to generate token
 const generateToken = () => crypto.randomBytes(32).toString('hex');
 
 export const createTeam = async (req, res) => {
     try {
-        const { title, description, visibility, members } = req.body;
+        const { title, description, visibility, members, projectId } = req.body;
         const ownerId = req.user._id; // From authenticated user
-        console.log("Authenticated User ID:", ownerId); // Should match token's _id
 
         // Validate input
         if (!title || !description || visibility === undefined || !members || !members.length) {
             return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        // If projectId is provided, use existing project; otherwise create new project
+        let project;
+        if (projectId) {
+            project = await Project.findById(projectId);
+            if (!project) {
+                return res.status(404).json({ message: 'Project not found' });
+            }
+            // Verify user has access to this project
+            if (project.owner.toString() !== ownerId.toString() &&
+                !project.members.some(m => m.user && m.user.toString() === ownerId.toString())) {
+                return res.status(403).json({ message: 'You do not have access to this project' });
+            }
+        } else {
+            // Create project first (primary entity)
+            project = await Project.create({
+                title: `${title} Project`,
+                description: `Main project for ${title}`,
+                owner: ownerId,
+                status: 'in-progress',
+                visibility: 'private',
+                members: [{ user: ownerId, role: 'Core Member' }]
+            });
         }
 
         // Prepare members array
@@ -68,14 +92,19 @@ export const createTeam = async (req, res) => {
             }
         }
 
-        // Create team
+        // Create team with projectId reference
         const team = await Team.create({
+            projectId: project._id,
             title,
             description,
             visibility,
             owner: ownerId,
             members: membersData
         });
+
+        // Link team to project
+        project.team = team._id;
+        await project.save();
 
         // Create invites for existing users
         for (const inviteData of invites) {
@@ -84,7 +113,7 @@ export const createTeam = async (req, res) => {
             await Invite.create(inviteData);
         }
 
-        res.status(201).json({ message: "Team Created Successfully", team });
+        res.status(201).json({ message: "Team Created Successfully", team, project });
     } catch (error) {
         console.error("Team creation error:", error);
         res.status(500).json({ message: error.message });
@@ -309,7 +338,8 @@ export const getTeamDetails = async (req, res) => {
     try {
         const team = await Team.findById(req.params.teamId)
             .populate('owner', 'username email')
-            .populate('members.user', 'username email');
+            .populate('members.user', 'username email')
+            .populate('projectId');
 
         if (!team) {
             return res.status(404).json({ message: 'Team not found' });
@@ -321,9 +351,28 @@ export const getTeamDetails = async (req, res) => {
     }
 };
 
+// Get team by projectId
+export const getTeamByProjectId = async (req, res) => {
+    try {
+        const team = await Team.findOne({ projectId: req.params.projectId })
+            .populate('owner', 'username email')
+            .populate('members.user', 'username email')
+            .populate('projectId');
+
+        if (!team) {
+            return res.status(404).json({ message: 'Team not found for this project' });
+        }
+
+        res.json(team);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 export const inviteUser = async (req, res) => {
     try {
-        const { userId, role, languages, sender } = req.body;
+        const { userId, role, languages } = req.body;
+        const sender = req.user._id;
         const teamId = req.params.teamId;
         console.log("PARAMETER Team ID: ", teamId);
 
@@ -353,17 +402,17 @@ export const inviteUser = async (req, res) => {
         }
 
         const token = generateToken();
+
         const invite = await Invite.create({
             team: teamId,
             userId,
             role,
             languages,
-            sender,
+            sender: req.user._id,
             token
         });
 
-        // TODO: Send email with invite link
-        res.json({ inviteToken: token });
+        res.json({ success: true, invite, token });
     } catch (error) {
         console.error("INVITE ERROR:", error);
         res.status(500).json({ message: "Something went wrong while inviting the user." });

@@ -1,9 +1,12 @@
+// LeftSidebar.jsx
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Card } from "../ui/Card";
 import { SidebarMenuItem } from "../sidebar/SidebarMenuItem";
 import axios from "axios";
 import API from "../../utils/API";
+import { TopContributors } from "../contributor/TopContributor";
+import { SuggestedDevelopers } from "../contributor/SuggestedDeveloper";
 
 export const LeftSidebar = () => {
   const location = useLocation();
@@ -38,22 +41,31 @@ export const LeftSidebar = () => {
   const navigate = useNavigate();
 
   return (
-    <Card className="p-6 rotate-1" rotation="rotate-1" hoverRotation="rotate-1">
-      <ul className="space-y-0">
-        {menuItems.map((item, index) => (
-          <SidebarMenuItem
-            key={`${item.href}-${index}`}
-            onClick={() => navigate(item.href)}
-            isActive={
-              item.href === "/"
-                ? currentPath === "/"
-                : currentPath.startsWith(item.href)
-            }
-          >
-            {item.label}
-          </SidebarMenuItem>
-        ))}
-      </ul>
-    </Card>
+    <div className="space-y-6">
+      {/* Navigation Menu */}
+      <Card
+        className="p-6 rotate-1"
+        rotation="rotate-1"
+        hoverRotation="rotate-1"
+      >
+        <ul className="space-y-0">
+          {menuItems.map((item, index) => (
+            <SidebarMenuItem
+              key={`${item.href}-${index}`}
+              onClick={() => navigate(item.href)}
+              isActive={
+                item.href === "/"
+                  ? currentPath === "/"
+                  : currentPath.startsWith(item.href)
+              }
+            >
+              {item.label}
+            </SidebarMenuItem>
+          ))}
+        </ul>
+      </Card>
+
+      <SuggestedDevelopers />
+    </div>
   );
 };

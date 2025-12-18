@@ -4,11 +4,14 @@ import {
     getAllProjects,
     getMyProjects,
     getProjectById,
-    deleteProject
+    deleteProject,
+    getPublicCompletedProjects
 } from '../controllers/ProjectController.js';
 
 import multer from 'multer';
 import path from 'path';
+import Project from '../models/projectModel.js';
+import { auth } from '../middleware/AuthMiddleware.js';
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -47,8 +50,19 @@ router.post('/create', upload.fields([
     { name: 'screenshots', maxCount: 10 }
 ]), createProject);
 router.get('/all', getAllProjects);
-router.get('/:id', getProjectById);
+router.get('/public/completed', getPublicCompletedProjects);
 router.get('/my-projects/:id', getMyProjects);
+router.get("/team/:teamId", async (req, res) => {
+    try {
+        console.log("TEAM ID : ", req.params.teamId);
+        const project = await Project.findOne({ team: req.params.teamId });
+        res.json(project);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+        console.log("ERROR : ", error);
+    }
+});
+router.get('/:id', getProjectById);
 router.delete('/:userId/:projectId', deleteProject);
 
 export default router;

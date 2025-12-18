@@ -2,6 +2,7 @@ import express from 'express';
 import {
     createTeam,
     getTeamDetails,
+    getTeamByProjectId,
     inviteUser,
     acceptInvite,
     joinPublicTeam,
@@ -19,7 +20,7 @@ const router = express.Router();
 
 router.post('/team', auth, createTeam);
 router.get('/public', auth, getPublicTeams);
-router.post('/:teamId/invite', inviteUser);
+router.post('/:teamId/invite', auth, inviteUser);
 router.post('/invite/accept/:token', auth, acceptInvite);
 router.get('/:userId/invitations', getUserInvitations);
 router.post('/invite/:inviteId/respond', auth, respondToInvite);
@@ -28,6 +29,7 @@ router.get('/owner/requests', auth, getJoinRequests);
 router.post('/request/:requestId/respond', auth, respondToJoinRequest);
 router.post('/:teamId/join', auth, joinPublicTeam);
 router.get('/user/:id', getTeamsByUser);
+router.get('/project/:projectId', getTeamByProjectId);
 router.get('/:teamId', getTeamDetails);
 
 export default router;

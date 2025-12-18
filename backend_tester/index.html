@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CreateIt Backend Tester</title>
+
+  <!-- Socket.IO (for later steps) -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+  <style>
+    body {
+      background: #020617;
+      color: #e5e7eb;
+      font-family: system-ui, sans-serif;
+      padding: 16px;
+    }
+
+    h1 { color: #38bdf8; }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .tabs button {
+      padding: 8px 12px;
+      background: #0f172a;
+      color: #e5e7eb;
+      border: 1px solid #334155;
+      cursor: pointer;
+    }
+
+    .tabs button.active {
+      background: #38bdf8;
+      color: #020617;
+      font-weight: bold;
+    }
+
+    .panel {
+      display: none;
+      border: 1px solid #334155;
+      padding: 16px;
+      border-radius: 8px;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    textarea, input {
+      width: 100%;
+      margin: 6px 0;
+      padding: 8px;
+      background: #020617;
+      color: #e5e7eb;
+      border: 1px solid #334155;
+    }
+
+    button.action {
+      margin-top: 8px;
+      background: #38bdf8;
+      color: #020617;
+      border: none;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    pre {
+      background: #020617;
+      padding: 12px;
+      border: 1px solid #334155;
+      margin-top: 12px;
+      max-height: 300px;
+      overflow: auto;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>🧪 CreateIt – Backend Tester</h1>
+
+  <div class="tabs">
+    <button data-tab="auth">Auth</button>
+    <button data-tab="team">Team</button>
+    <button data-tab="project">Project</button>
+    <button data-tab="task">Task</button>
+    <button data-tab="chat">Chat</button>
+    <button data-tab="jira">JIRA</button>
+    <button data-tab="debug">Debug</button>
+  </div>
+
+  <!-- AUTH -->
+  <div class="panel" id="auth">
+    <h2>🔐 Auth</h2>
+
+    <input id="loginEmail" placeholder="Email" />
+    <input id="loginPassword" placeholder="Password" type="password" />
+    <button class="action" onclick="login()">Login</button>
+
+    <pre id="authOutput"></pre>
+  </div>
+
+  <!-- TEAM -->
+  <div class="panel" id="team">
+    <h2>👥 Team</h2>
+    <hr />
+
+<button class="action" onclick="loadMyTeams()">Load My Teams</button>
+
+<select id="teamSelect" onchange="selectTeam()">
+  <option value="">-- Select a team --</option>
+</select>
+
+    <textarea id="teamPayload" rows="10"></textarea>
+    <button class="action" onclick="createTeam()">Create Team</button>
+    <hr />
+<h3>📨 Invite User</h3>
+
+<input id="inviteUserId" placeholder="User ID to invite" />
+<input id="inviteRole" placeholder="Role (Contributor)" />
+<input id="inviteLanguages" placeholder="Languages (comma separated)" />
+
+<button class="action" onclick="inviteUser()">Send Invite</button>
+
+<hr />
+<h3>📥 My Invitations</h3>
+<button class="action" onclick="loadInvites()">Load Invitations</button>
+
+<select id="inviteSelect">
+  <option value="">-- Select Invite --</option>
+</select>
+
+<button class="action" onclick="acceptInvite()">Accept</button>
+<button class="action" onclick="rejectInvite()">Reject</button>
+
+
+    <pre id="teamOutput"></pre>
+  </div>
+
+  <!-- PROJECT -->
+  <div class="panel" id="project">
+    <h2>📁 Project</h2>
+    <textarea id="projectPayload" rows="10"></textarea>
+    <button class="action" onclick="createProject()">Create Project</button>
+    <pre id="projectOutput"></pre>
+  </div>
+
+  <!-- TASK -->
+  <div class="panel" id="task">
+    <h2>📌 Task</h2>
+    <textarea id="taskPayload" rows="10"></textarea>
+    <button class="action" onclick="createTask()">Create Task</button>
+    <pre id="taskOutput"></pre>
+  </div>
+
+  <!-- CHAT -->
+<div class="panel" id="chat">
+    <h2>💬 Chat (Socket.IO)</h2>
+  
+    <button class="action" onclick="connectSocket()">Connect Socket</button>
+    <button class="action" onclick="joinTeamRoom()">Join Team Room</button>
+  
+    <hr />
+  
+    <input
+      id="chatMessage"
+      placeholder="Type message..."
+      onfocus="typing(true)"
+      onblur="typing(false)"
+    />
+    <button class="action" onclick="sendMessage()">Send</button>
+  
+    <hr />
+  
+    <input id="deleteMessageId" placeholder="Message ID to delete" />
+    <button class="action" onclick="deleteMessage()">Delete Message</button>
+  
+    <pre id="chatOutput"></pre>
+  </div>
+
+  <!-- JIRA -->
+<div class="panel" id="jira">
+  <h2>🔗 JIRA Integration</h2>
+
+  <button class="action" onclick="connectJira()">Connect JIRA</button>
+  <button class="action" onclick="checkJira()">Check Connection</button>
+
+  <hr />
+
+  <button class="action" onclick="getJiraProjects()">Get JIRA Projects</button>
+
+  <input id="jiraProjectKey" placeholder="JIRA Project Key (e.g. CRE)" />
+  <button class="action" onclick="getJiraIssues()">Get JIRA Issues</button>
+
+  <pre id="jiraOutput"></pre>
+</div>
+
+
+  <!-- DEBUG -->
+  <div class="panel" id="debug">
+    <h2>🐞 Debug / State</h2>
+    <pre id="debugOutput"></pre>
+  </div>
+
+  <script src="./state.js"></script>
+  <script src="./api.js"></script>
+  <script src="./schemas.js"></script>
+  <script src="./app.js"></script>
+  <script src="./socket.js"></script>
+</body>
+</html>

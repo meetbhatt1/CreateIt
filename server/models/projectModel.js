@@ -29,6 +29,18 @@ const projectSchema = new Schema({
         ref: 'User',
         required: [true, 'Project owner is required']
     },
+    status: {
+        type: String,
+        enum: ['in-progress', 'completed'],
+        default: 'in-progress',
+        required: true
+    },
+    visibility: {
+        type: String,
+        enum: ['private', 'public'],
+        default: 'private',
+        required: true
+    },
     members: [{
         user: { type: Types.ObjectId, ref: 'User', required: false },
         role: {
@@ -38,6 +50,15 @@ const projectSchema = new Schema({
         },
         joinedAt: { type: Date, default: Date.now }
     }],
+    jira: {
+        projectKey: String,   // e.g. CRE-TEAM1
+        synced: { type: Boolean, default: false }
+    },
+    team: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Team",
+        required: false
+    },
     // accessRequests: [{
     //     user: { type: Types.ObjectId, ref: 'User', required: true },
     //     message: String,

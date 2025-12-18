@@ -6,40 +6,74 @@ import { Button } from "../ui/UI_Components";
 import API from "../../utils/API";
 
 const TeamDetailsPage = () => {
-  const { teamId } = useParams();
+  const { projectId, teamId } = useParams(); // Support both routes for backward compatibility
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
   const [team, setTeam] = useState(null);
+  const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("Developer");
   const [isOwner, setIsOwner] = useState(false);
 
+  // Fetch project first (primary entity)
   useEffect(() => {
-    const fetchTeamData = async () => {
+    const fetchProject = async () => {
+      const id = projectId || teamId; // Support both routes
+      if (!id) return;
+
       try {
         setLoading(true);
+        let projectRes;
 
-        const teamRes = await axios.get(`${API}/team/user/${user._id}`);
+        if (projectId) {
+          // New route: /projects/:projectId/team
+          projectRes = await axios.get(
+            `${API}/projects/${projectId}`,
+            {
+              headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+            }
+          );
+        } else {
+          // Legacy route: /team/:teamId - fetch project via team
+          projectRes = await axios.get(`${API}/projects/team/${teamId}`);
+        }
 
-        setTeam(teamRes?.data[0]);
-        setIsOwner(teamRes?.data[0]?.owner?._id == user?._id);
+        if (projectRes.status === 200 && projectRes.data) {
+          setProject(projectRes.data);
+          const projId = projectRes.data._id;
+
+          try {
+            const teamRes = await axios.get(`${API}/team/project/${projId}`);
+            if (teamRes.status === 200 && teamRes.data) {
+              setTeam(teamRes.data);
+              setIsOwner(teamRes.data?.owner?._id == user?._id);
+            }
+          } catch (error) {
+            console.error("Error fetching team:", error);
+          }
+        }
       } catch (error) {
-        console.error("Failed to fetch team data:", error);
+        console.error("Error fetching project:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTeamData();
-  }, [teamId, user._id]);
+    fetchProject();
+  }, [projectId, teamId, user._id]);
 
   const handleInviteSubmit = async (e) => {
     e.preventDefault();
+    if (!team?._id) {
+      alert("Team not found");
+      return;
+    }
+
     try {
       await axios.post(
-        `${API}/team/${teamId}/invite`,
+        `${API}/team/${team._id}/invite`,
         { email: inviteEmail, role: inviteRole },
         {
           headers: {
@@ -73,9 +107,9 @@ const TeamDetailsPage = () => {
         <Button
           variant="outline"
           className="mt-4"
-          onClick={() => navigate("/my-team")}
+          onClick={() => navigate(projectId ? `/projects/${projectId}` : "/my-team")}
         >
-          Back to My Teams
+          {projectId ? "Back to Project" : "Back to My Teams"}
         </Button>
       </div>
     );
@@ -99,11 +133,10 @@ const TeamDetailsPage = () => {
             <p className="text-gray-600 mt-2">{team.description}</p>
             <div className="flex items-center mt-4">
               <span
-                className={`px-3 py-1 rounded-full text-sm ${
-                  team.visibility
-                    ? "bg-green-100 text-green-800"
-                    : "bg-gray-100 text-gray-800"
-                }`}
+                className={`px-3 py-1 rounded-full text-sm ${team.visibility
+                  ? "bg-green-100 text-green-800"
+                  : "bg-gray-100 text-gray-800"
+                  }`}
               >
                 {team.visibility ? "Public" : "Private"}
               </span>
@@ -116,14 +149,24 @@ const TeamDetailsPage = () => {
             </div>
           </div>
 
-          {isOwner && (
-            <Button
-              variant="secondary"
+          <div className="flex gap-2">
+            {project && (
+              <Button
+                variant="primary"
+                onClick={() => navigate(`/kanban/${project._id}`)}
+              >
+                Open Board
+              </Button>
+            )}
+            {isOwner && (
+              <Button
+                variant="secondary"
               // onClick={() => navigate("/team-project")}
-            >
-              Edit Project
-            </Button>
-          )}
+              >
+                Edit Team
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -133,11 +176,10 @@ const TeamDetailsPage = () => {
           {["overview", "members", "settings"].map((tab) => (
             <button
               key={tab}
-              className={`py-4 px-1 text-sm font-medium border-b-2 ${
-                activeTab === tab
-                  ? "border-purple-500 text-purple-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
+              className={`py-4 px-1 text-sm font-medium border-b-2 ${activeTab === tab
+                ? "border-purple-500 text-purple-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
               onClick={() => setActiveTab(tab)}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -245,11 +287,10 @@ const TeamDetailsPage = () => {
                     </div>
                     <div className="text-right">
                       <span
-                        className={`px-2 py-1 text-xs rounded ${
-                          member.status === "accepted"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
+                        className={`px-2 py-1 text-xs rounded ${member.status === "accepted"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                          }`}
                       >
                         {member.status}
                       </span>

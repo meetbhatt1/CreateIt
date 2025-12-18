@@ -1,9 +1,13 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../ui/UI_Components";
+import axios from "axios";
+import API from "../../utils/API";
 
 const Settings = () => {
-  const [activeSection, setActiveSection] = useState("profile");
+  const [searchParams] = useSearchParams();
+  const sectionParam = searchParams.get("section");
+  const [activeSection, setActiveSection] = useState(sectionParam || "profile");
   const navigate = useNavigate();
 
   // Mock user data
@@ -50,11 +54,72 @@ const Settings = () => {
     hoverEffects: true,
   });
 
+  // JIRA integration state
+  const [jiraConnected, setJiraConnected] = useState(false);
+  const [jiraLoading, setJiraLoading] = useState(false);
+
+  // Check JIRA connection on mount
+  useEffect(() => {
+    const checkJiraConnection = async () => {
+      try {
+        const res = await axios.get(`${API}/jira/connection`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        setJiraConnected(res.data.connected);
+      } catch (err) {
+        console.error("Failed to check JIRA connection", err);
+        setJiraConnected(false);
+      }
+    };
+    checkJiraConnection();
+  }, []);
+
+  const handleJiraConnect = async () => {
+    try {
+      setJiraLoading(true);
+      const res = await axios.get(`${API}/jira/oauth/initiate`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      // Redirect to Atlassian OAuth
+      window.location.href = res.data.authUrl;
+    } catch (err) {
+      console.error("Failed to initiate JIRA OAuth", err);
+      alert("Failed to connect JIRA. Please try again.");
+      setJiraLoading(false);
+    }
+  };
+
+  const handleJiraDisconnect = async () => {
+    if (!window.confirm("Are you sure you want to disconnect your JIRA account?")) {
+      return;
+    }
+    try {
+      setJiraLoading(true);
+      await axios.post(`${API}/jira/disconnect`, {}, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      setJiraConnected(false);
+      alert("JIRA account disconnected successfully");
+    } catch (err) {
+      console.error("Failed to disconnect JIRA", err);
+      alert("Failed to disconnect JIRA. Please try again.");
+    } finally {
+      setJiraLoading(false);
+    }
+  };
+
   // Settings sections
   const sections = [
     { id: "profile", label: "Profile", icon: "👤" },
     { id: "notifications", label: "Notifications", icon: "🔔" },
     { id: "privacy", label: "Privacy & Security", icon: "🛡️" },
+    { id: "integrations", label: "Integrations", icon: "🔌" },
     { id: "data", label: "Data & Storage", icon: "💾" },
     { id: "appearance", label: "Appearance", icon: "🎨" },
   ];
@@ -488,6 +553,72 @@ const Settings = () => {
                       <button className="w-full text-left px-6 py-4 border-2 border-red-200 text-red-600 rounded-2xl hover:bg-red-50 transition-all font-semibold">
                         🗑️ Delete Account
                       </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Integrations Section */}
+              {activeSection === "integrations" && (
+                <div className="bg-white/95 backdrop-blur-sm rounded-[25px] p-8 shadow-[0_8px_25px_rgba(102,126,234,0.3)] border-4 border-indigo-200 transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-8">
+                    <span className="text-3xl">🔌</span>
+                    <h2 className="text-3xl font-bold text-gray-800 [text-shadow:1px_1px_0px_rgba(0,0,0,0.1)]">
+                      Integrations
+                    </h2>
+                  </div>
+
+                  <div className="space-y-8">
+                    {/* JIRA Integration */}
+                    <div className="border-2 border-gray-200 rounded-2xl p-6 hover:border-indigo-200 transition-all">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-4">
+                          <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center">
+                            <span className="text-3xl">🔷</span>
+                          </div>
+                          <div>
+                            <h3 className="text-2xl font-bold text-gray-800">
+                              Atlassian JIRA
+                            </h3>
+                            <p className="text-gray-600 mt-1">
+                              Connect your JIRA account to view issues in Kanban boards
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {jiraConnected ? (
+                            <>
+                              <span className="px-4 py-2 bg-green-100 text-green-700 rounded-lg font-semibold">
+                                ✓ Connected
+                              </span>
+                              <Button
+                                variant="outline"
+                                onClick={handleJiraDisconnect}
+                                disabled={jiraLoading}
+                                className="border-red-500 text-red-500 hover:bg-red-50"
+                              >
+                                Disconnect
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              variant="primary"
+                              onClick={handleJiraConnect}
+                              disabled={jiraLoading}
+                              className="bg-blue-500 hover:bg-blue-600"
+                            >
+                              {jiraLoading ? "Connecting..." : "Connect JIRA"}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="mt-4 p-4 bg-gray-50 rounded-xl">
+                        <p className="text-sm text-gray-600">
+                          {jiraConnected
+                            ? "Your JIRA account is connected. You can now view JIRA issues in your Kanban boards by switching the data source."
+                            : "Connect your JIRA account to view and manage issues from JIRA directly in CreateIt Kanban boards. This integration is optional and does not affect your CreateIt tasks."}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

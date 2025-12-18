@@ -28,6 +28,8 @@ import Chat from "./components/Chat/Chat";
 import ProjectDetailPage from "./components/Project/ProjectDetailPage";
 import Settings from "./components/Settings/Settings";
 import Dashboard from "./components/Settings/Dashboard";
+import JiraCallback from "./Pages/JiraCallback";
+import JiraError from "./Pages/JiraError";
 
 const PrivateRoute = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -128,6 +130,12 @@ const appRoutes = [
     path: "/project/:projectId",
     element: <ProjectDetailPage />,
     authRequired: true,
+    sidebar: "left+right",
+  },
+  {
+    path: "/project/:projectId/team",
+    element: <TeamDetailsPage />,
+    authRequired: true,
     sidebar: "team",
   },
   {
@@ -155,7 +163,7 @@ const appRoutes = [
     sidebar: "team",
   },
   {
-    path: "/team/:teamId/kanban",
+    path: "/kanban/:projectId",
     element: <KanbanBoard />,
     authRequired: true,
     sidebar: "none",
@@ -188,6 +196,24 @@ const appRoutes = [
     path: "/mock-interview",
     element: <MockInterview />,
     authRequired: true,
+    sidebar: "none",
+  },
+  {
+    path: "/jira/success",
+    element: <JiraCallback />,
+    authRequired: true,
+    sidebar: "none",
+  },
+  {
+    path: "/jira/error",
+    element: <JiraError />,
+    authRequired: true,
+    sidebar: "none",
+  },
+  {
+    path: "/jira/callback",
+    element: <JiraCallback />,
+    authRequired: false,
     sidebar: "none",
   },
 ];

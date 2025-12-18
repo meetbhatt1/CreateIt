@@ -21,6 +21,11 @@ const taskSchema = new mongoose.Schema(
             enum: ["todo", "inProgress", "review", "done"],
             default: "todo",
         },
+        jira: {
+            issueId: String,
+            issueKey: String,
+            synced: { type: Boolean, default: false }
+        },
         due: {
             type: Date,
         },

@@ -1,6 +1,11 @@
 import mongoose from 'mongoose';
 
 const teamSchema = new mongoose.Schema({
+    projectId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Project',
+        required: true
+    },
     title: {
         type: String,
         required: true
